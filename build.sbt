@@ -1,7 +1,12 @@
 lazy val commonSettings = Seq (
-  version := "0.0.1",
-  scalaVersion := "2.11.7",
-  name := "SimpleCQRS-Scala"
+	scalaVersion := "2.11.7",
+	version := "0.0.1",
+	name := "SimpleCQRS-Scala"
 )
 
-lazy val root = (project in file(".")).settings(commonSettings: _*)
+lazy val commandSide = project in file("CommandSide")
+lazy val querySide = project in file("QuerySide")
+
+lazy val simpleCqrsScala = (project in file("."))
+	.aggregate(commandSide, querySide)
+	.settings(commonSettings: _*)
