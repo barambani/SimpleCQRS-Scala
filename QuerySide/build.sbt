@@ -4,5 +4,5 @@ lazy val prjcSettings = Seq (
 	name := "QuerySide"
 )
 
-lazy val querySide = (project in file("QuerySide"))
+lazy val querySide = (project in file("."))
 	.settings(prjcSettings: _*)
