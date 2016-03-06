@@ -7,8 +7,8 @@ sealed trait Event {
 		case InventoryItemCreated(id, name) => "Item " + name + " created (id:" + id.toString() + ")"
 		case InventoryItemDeactivated(id) => "Item deactivated (id:" + id.toString() + ")"
 		case InventoryItemRenamed(id, newName) => "Item renamed to " + newName + " (id:" + id.toString() + ")"
-		case ItemsCheckedInToInventory(id, count) => "Check-in " + count.toString() + " of item (id:" + id.toString() + ")"
-		case ItemsRemovedFromInventory(id, count) => "Removed " + count.toString() + " of item (id:" + id.toString() + ")"
+		case ItemsCheckedInToInventory(id, count) => "Check-in of " + count.toString() + " item/s (id:" + id.toString() + ")"
+		case ItemsRemovedFromInventory(id, count) => "Removed " + count.toString() + " item/s (id:" + id.toString() + ")"
 		case _ => ""
 	} 
 }
