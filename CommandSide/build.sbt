@@ -4,8 +4,7 @@ lazy val prjcSettings = Seq (
 	name := "CommandSide"
 )
 
-lazy val commandSide = (project in file("."))
-	.settings(prjcSettings: _*)
+lazy val commandSide = (project in file(".")).settings(prjcSettings: _*)
 
 libraryDependencies ++= Seq(
     "org.specs2" %% "specs2" % "3.0.1" % "test",
