@@ -1,28 +1,29 @@
 package InventoryItem
 
-import Domain._
 import Events._
 import java.util.UUID
 
 object InventoryItem {
-	def apply(id: UUID, name: String): InventoryItem = Domain.evolve(new InventoryItem(), InventoryItemCreated(id, name))
+
+	val initialState = new InventoryItem()
+
+	def evolve(initialState: InventoryItem, historyStep: Event): InventoryItem = 
+		evolve(initialState, List(historyStep))
+	
+	def evolve(initialState: InventoryItem, history: List[Event]): InventoryItem =
+		(history foldLeft initialState)((s, e) => s stateAfterTheEvent e)
 }
 
-class InventoryItem private () extends AggregateRoot {
-
-	//	State
-	private var _id: Option[UUID] = None
-	private var _name: Option[String] = None
-	private var _isAactivated: Option[Boolean] = None
+case class InventoryItem private (id: UUID, name: String, isActivated: Boolean) {
 	
-	override def changeStateAsHappened(event: Event): Unit = event match {
-		
-		case InventoryItemCreated(id, name) => {
-			_id = Some(id)
-			_name = Some(name)
-			_isAactivated = Some(true)
-		}
-		case InventoryItemDeactivated(id) => _isAactivated = Some(false)
-		case _ => _isAactivated = _isAactivated
+	private def this() = this(new UUID(0, 0), "", false)
+
+	def stateAfterTheEvent(event: Event): InventoryItem = event match {
+
+		case InventoryItemCreated(newId, newName) => new InventoryItem(newId, newName, true)
+		case InventoryItemDeactivated(toDeactivateId) => 
+			if(toDeactivateId == id) new InventoryItem(id, name, false)
+			else this
+		case _ => this
 	}
 }
