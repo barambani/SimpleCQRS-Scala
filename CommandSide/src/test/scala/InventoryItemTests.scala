@@ -11,6 +11,7 @@ object InventoryItemSpec extends Specification {
 	val id = UUID.randomUUID
 
 	"InventoryItem" should {
+		
 	  	"have the correct state after the InventoryItemCreated event" in {
 
 	  		val initialState = InventoryItem.initialState

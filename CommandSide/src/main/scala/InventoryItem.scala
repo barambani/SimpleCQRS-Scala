@@ -11,7 +11,7 @@ object InventoryItem {
 		evolve(initialState, List(historyStep))
 	
 	def evolve(initialState: InventoryItem, history: List[Event]): InventoryItem =
-		(history foldLeft initialState)((s, e) => s stateAfterTheEvent e)
+		(history foldLeft initialState) ((s, e) => s stateAfterTheEvent e)
 }
 
 case class InventoryItem private (id: UUID, name: String, isActivated: Boolean) {
