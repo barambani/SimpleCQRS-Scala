@@ -5,13 +5,13 @@ import java.util.UUID
 
 object InventoryItem {
 
-	val initialState = new InventoryItem()
+	private val initialState = new InventoryItem()
 
-	def evolve(initialState: InventoryItem, historyStep: Event): InventoryItem = 
-		evolve(initialState, List(historyStep))
+	def apply(historyStep: Event): InventoryItem = 
+		apply(List(historyStep))
 	
-	def evolve(initialState: InventoryItem, history: List[Event]): InventoryItem =
-		(history foldRight initialState) ((e, s) => s stateAfterTheEvent e)
+	def apply(history: List[Event]): InventoryItem =
+		(history foldRight initialState) ((e, s) => s getStateWhen e)
 }
 
 case class InventoryItem private (
@@ -25,8 +25,8 @@ case class InventoryItem private (
 	private def nextVersion: Long = version + 1
 	private def isInSequence(event: Sequenced): Boolean = event.sequence == nextVersion
 
-	def stateAfterTheEvent(event: Event): InventoryItem = 
-		if(!isInSequence(event)) this
+	def getStateWhen(event: Event): InventoryItem = 
+		if(!isInSequence(event)) this // TODO: Error in this case
 		else event match {
 			case InventoryItemCreated(newId, newName, sequence) => new InventoryItem(newId, newName, true, sequence)
 			case InventoryItemDeactivated(toDeactivateId, sequence) => 

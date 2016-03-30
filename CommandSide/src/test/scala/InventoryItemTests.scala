@@ -16,7 +16,7 @@ object InventoryItemSpec extends Specification {
 
 	  		val history = List(InventoryItemCreated(id, "Test Inventory Item", 1))
 
-	  		val finalState = InventoryItem.evolve(InventoryItem.initialState, history)
+	  		val finalState = InventoryItem(history)
 
   			finalState.id mustEqual id
 			finalState.name mustEqual "Test Inventory Item"
@@ -30,7 +30,7 @@ object InventoryItemSpec extends Specification {
 	  			InventoryItemCreated(id, "Test Inventory Item", 1)
   			)
 
-  			val finalState = InventoryItem.evolve(InventoryItem.initialState, history)
+  			val finalState = InventoryItem(history)
 
   			finalState.version mustEqual 2
   			finalState.isActivated mustEqual false
@@ -43,7 +43,7 @@ object InventoryItemSpec extends Specification {
 	  			InventoryItemCreated(id, "Test Inventory Item", 1)
   			)
 
-  			val finalState = InventoryItem.evolve(InventoryItem.initialState, history)
+  			val finalState = InventoryItem(history)
 
   			finalState.version mustEqual 1
   			finalState.isActivated mustEqual true
