@@ -25,6 +25,8 @@ case class InventoryItem private (
 	private def nextVersion: Long = version + 1
 	private def isInSequence(event: Sequenced): Boolean = event.sequence == nextVersion
 
+	private def isValid(name: String): Boolean = false
+
 	def getStateWhen(event: Event): InventoryItem = 
 		if(!isInSequence(event)) this // TODO: Error in this case
 		else event match {
@@ -40,6 +42,4 @@ case class InventoryItem private (
 	def renameInventoryItem(newName: String): Event = InventoryItemRenamed(id, newName, nextVersion)
 	def checkInItemsToInventory(count: Int): Event = ItemsCheckedInToInventory(id, count, nextVersion)
 	def removeItemsFromInventory(count: Int): Event = ItemsRemovedFromInventory(id, count, nextVersion)
-
-	private def isValid(name: String): Boolean = false
 }

@@ -14,9 +14,9 @@ object InventoryItemSpec extends Specification {
 
 	  	"have the correct state after the InventoryItemCreated event" in {
 
-	  		val history = List(InventoryItemCreated(id, "Test Inventory Item", 1))
+	  		val event = InventoryItemCreated(id, "Test Inventory Item", 1)
 
-	  		val finalState = InventoryItem(history)
+	  		val finalState = InventoryItem(event)
 
   			finalState.id mustEqual id
 			finalState.name mustEqual "Test Inventory Item"
