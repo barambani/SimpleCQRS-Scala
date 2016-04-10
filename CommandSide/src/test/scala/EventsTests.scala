@@ -1,7 +1,7 @@
-package EventsTests
+package SimpleCqrsScala.CommandSide.Test.EventsTests
 
 import org.specs2.mutable._
-import Events._
+import SimpleCqrsScala.CommandSide.Events._
 
 import java.util.UUID
 

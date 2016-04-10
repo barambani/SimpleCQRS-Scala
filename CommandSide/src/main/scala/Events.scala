@@ -1,4 +1,4 @@
-package Events
+package SimpleCqrsScala.CommandSide.Events
 
 import java.util.UUID
 

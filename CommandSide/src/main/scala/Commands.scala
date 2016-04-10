@@ -1,4 +1,4 @@
-package Commands
+package SimpleCqrsScala.CommandSide.Commands
 
 import java.util.UUID
 
