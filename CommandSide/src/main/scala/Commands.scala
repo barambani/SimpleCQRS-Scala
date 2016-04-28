@@ -3,6 +3,8 @@ package SimpleCqrsScala.CommandSide.Commands
 import java.util.UUID
 
 sealed trait Command
+
+//	Inventory Item
 case class CreateInventoryItem(id: UUID, name: String) extends Command
 case class DeactivateInventoryItem(id: UUID) extends Command
 case class RenameInventoryItem(id: UUID, newName: String) extends Command

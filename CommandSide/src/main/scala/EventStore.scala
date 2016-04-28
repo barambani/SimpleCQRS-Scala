@@ -4,7 +4,7 @@ import java.util.UUID
 
 import SimpleCqrsScala.CommandSide.Events._
 
-sealed trait Repository {
+trait Repository {
 	def Save(e: Event): Unit
 	def Save(es: List[Event]): Unit 
 	def GetHistoryById(id: UUID): List[Event]

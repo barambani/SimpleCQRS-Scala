@@ -19,7 +19,9 @@ class CommandHandler(eventStore: Repository) {
 
 		command match {
 
-			case CreateInventoryItem(id, name) => eventStore Save InventoryItemCreated(id, name, 1)
+			case CreateInventoryItem(id, name) => 
+				eventStore Save InventoryItemCreated(id, name, 1)
+			
 			case DeactivateInventoryItem(id) => {
 				val event = InventoryItem(readHistory(id)).deactivateInventoryItem 
 				eventStore Save event
