@@ -48,5 +48,32 @@ object InventoryItemSpec extends Specification {
   			finalState.version mustEqual 1
   			finalState.isActivated mustEqual true
 	  	}
+
+	  	"have the correct name after the InventoryItemRenamed event" in {
+
+  			val history = List(
+	  			InventoryItemRenamed(id, "New Iten Name", 2),
+	  			InventoryItemCreated(id, "Test Inventory Item", 1)
+  			)
+	  		
+	  		val finalState = InventoryItem(history)
+
+			finalState.name mustEqual "New Iten Name"
+	  	}
+
+	  	"have the correct item count after the check in and removal of items" in {
+
+  			val history = List(
+  				ItemsRemovedFromInventory(id, 3, 5),
+  				ItemsCheckedInToInventory(id, 2, 4),
+  				ItemsRemovedFromInventory(id, 3, 3),
+  				ItemsCheckedInToInventory(id, 10, 2),
+	  			InventoryItemCreated(id, "Test Inventory Item", 1)
+  			)
+	  		
+	  		val finalState = InventoryItem(history)
+
+			finalState.itemsCount mustEqual 6
+	  	}
 	}
 }

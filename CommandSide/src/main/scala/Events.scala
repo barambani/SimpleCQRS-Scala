@@ -2,11 +2,15 @@ package SimpleCqrsScala.CommandSide.Events
 
 import java.util.UUID
 
+sealed trait Identity {
+	val id: UUID
+}
+
 sealed trait Sequenced {
 	val sequence: Long
 }
 
-sealed trait Event extends Sequenced {
+sealed trait Event extends Sequenced with Identity {
 	override def toString: String = this match {
 		case InventoryItemCreated(id, name, sequence) => "seq: " + sequence + " - Item " + name + " created (id:" + id.toString() + ")"
 		case InventoryItemDeactivated(id, sequence) => "seq: " + sequence + " - Item deactivated (id:" + id.toString() + ")"
