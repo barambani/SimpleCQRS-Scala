@@ -23,7 +23,8 @@ class CommandHandler(eventStore: Repository) {
 				eventStore Save InventoryItemCreated(id, name, 1)
 			
 			case DeactivateInventoryItem(id) => {
-				val event = InventoryItem(readHistory(id)).deactivateInventoryItem 
+				val item = InventoryItem(readHistory(id))
+				val event = item.deactivateInventoryItem 
 				eventStore Save event
 			}
 			case RenameInventoryItem(id, newName) => {

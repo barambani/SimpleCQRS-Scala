@@ -19,7 +19,7 @@ object InventoryItem {
 case class InventoryItem private (
 	id: UUID, 
 	name: String, 
-	isActivated: Boolean ,
+	isActivated: Boolean,
 	itemsCount: Int = 0,
 	version: Long = 0) {
 	
@@ -38,24 +38,25 @@ case class InventoryItem private (
 
 		if(!isInSequence(event)) this // TODO: Error in this case
 		else if(!hasTheCorrectId(event)) this // TODO: Error in this case
-		else event match {
-			case InventoryItemCreated(newId, newName, sequence) => 
-				new InventoryItem(newId, newName, true, version = sequence)
-			
-			case InventoryItemDeactivated(toDeactivateId, sequence) => 
-				new InventoryItem(id, name, false, version = sequence)
+		else 
+			event match {
+				case InventoryItemCreated(newId, newName, sequence) => 
+					InventoryItem(newId, newName, true, version = sequence)
+				
+				case InventoryItemDeactivated(toDeactivateId, sequence) => 
+					InventoryItem(id, name, false, version = sequence)
 
-			case InventoryItemRenamed(toRenameId, newName, sequence) => 
-				new InventoryItem(id, newName, isActivated, itemsCount, sequence)
+				case InventoryItemRenamed(toRenameId, newName, sequence) => 
+					InventoryItem(id, newName, isActivated, itemsCount, sequence)
 
-			case ItemsCheckedInToInventory(toCheckinid, count, sequence) => 
-				new InventoryItem(id, name, isActivated, countAfterCheckIn(count), sequence)
-			
-			case ItemsRemovedFromInventory(toRemoveId, count, sequence) => 
-				new InventoryItem(id, name, isActivated, countAfterRemoval(count), sequence)
-			
-			case _ => this
-		}
+				case ItemsCheckedInToInventory(toCheckinid, count, sequence) => 
+					InventoryItem(id, name, isActivated, countAfterCheckIn(count), sequence)
+				
+				case ItemsRemovedFromInventory(toRemoveId, count, sequence) => 
+					InventoryItem(id, name, isActivated, countAfterRemoval(count), sequence)
+				
+				case _ => this
+			}
 
 	//	Behavior
 	def create(id: UUID, name: String): Event = {
