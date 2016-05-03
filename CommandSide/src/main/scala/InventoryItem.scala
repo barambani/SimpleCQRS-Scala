@@ -9,19 +9,16 @@ object InventoryItem {
 	private val initialId = new UUID(0, 0)
 	private val initialState = new InventoryItem()
 
-	def apply(historyStep: Event): InventoryItem = 
-		apply(List(historyStep))
-	
 	def apply(history: List[Event]): InventoryItem =
 		(history foldRight initialState) ((e, s) => s getStateWhen e)
 }
 
-case class InventoryItem private (
-	id: UUID, 
-	name: String, 
-	isActivated: Boolean,
-	itemsCount: Int = 0,
-	version: Long = 0) {
+class InventoryItem private (
+	val id: UUID, 
+	val name: String, 
+	val isActivated: Boolean,
+	val itemsCount: Int = 0,
+	val version: Long = 0) {
 	
 	private def this() = this(InventoryItem.initialId, "", false)
 
@@ -41,41 +38,35 @@ case class InventoryItem private (
 		else 
 			event match {
 				case InventoryItemCreated(newId, newName, sequence) => 
-					InventoryItem(newId, newName, true, version = sequence)
+					new InventoryItem(newId, newName, true, version = sequence)
 				
 				case InventoryItemDeactivated(toDeactivateId, sequence) => 
-					InventoryItem(id, name, false, version = sequence)
+					new InventoryItem(id, name, false, version = sequence)
 
 				case InventoryItemRenamed(toRenameId, newName, sequence) => 
-					InventoryItem(id, newName, isActivated, itemsCount, sequence)
+					new InventoryItem(id, newName, isActivated, itemsCount, sequence)
 
 				case ItemsCheckedInToInventory(toCheckinid, count, sequence) => 
-					InventoryItem(id, name, isActivated, countAfterCheckIn(count), sequence)
+					new InventoryItem(id, name, isActivated, countAfterCheckIn(count), sequence)
 				
 				case ItemsRemovedFromInventory(toRemoveId, count, sequence) => 
-					InventoryItem(id, name, isActivated, countAfterRemoval(count), sequence)
+					new InventoryItem(id, name, isActivated, countAfterRemoval(count), sequence)
 				
 				case _ => this
 			}
 
 	//	Behavior
-	def create(id: UUID, name: String): Event = {
-		//if(id == InventoryItem.initialId) ERROR
+	def deactivateInventoryItem: List[Event] =
+		InventoryItemDeactivated(id, nextVersion) asHistory
+
+	def renameInventoryItem(newName: String): List[Event] =
 		//if(newName,ieEmpty) ERROR
-		InventoryItemCreated(id, name, nextVersion)
-	}
+		InventoryItemRenamed(id, newName, nextVersion) asHistory
 
-	def deactivateInventoryItem: Event =
-		InventoryItemDeactivated(id, nextVersion)
+	def checkInItemsToInventory(count: Int): List[Event] =
+		ItemsCheckedInToInventory(id, count, nextVersion) asHistory
 
-	def renameInventoryItem(newName: String): Event =
-		//if(newName,ieEmpty) ERROR
-		InventoryItemRenamed(id, newName, nextVersion)
-
-	def checkInItemsToInventory(count: Int): Event =
-		ItemsCheckedInToInventory(id, count, nextVersion)
-
-	def removeItemsFromInventory(count: Int): Event =
+	def removeItemsFromInventory(count: Int): List[Event] =
 		//if(itemsCount - count < 0) ERROR
-		ItemsRemovedFromInventory(id, count, nextVersion)
+		ItemsRemovedFromInventory(id, count, nextVersion) asHistory
 }

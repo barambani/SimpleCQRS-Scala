@@ -18,7 +18,9 @@ sealed trait Event extends Sequenced with Identity {
 		case ItemsCheckedInToInventory(id, count, sequence) => "seq: " + sequence + " - Check-in of " + count.toString() + " item/s (id:" + id.toString() + ")"
 		case ItemsRemovedFromInventory(id, count, sequence) => "seq: " + sequence + " - Removed " + count.toString() + " item/s (id:" + id.toString() + ")"
 		case _ => ""
-	} 
+	}
+
+	def asHistory: List[Event] = List(this)
 }
 
 //	Inventory Item
