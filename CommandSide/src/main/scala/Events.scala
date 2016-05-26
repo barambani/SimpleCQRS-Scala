@@ -1,4 +1,4 @@
-package SimpleCqrsScala.CommandSide.Events
+package SimpleCqrsScala.CommandSide
 
 import java.util.UUID
 
@@ -11,15 +11,6 @@ sealed trait Sequenced {
 }
 
 sealed trait Event extends Sequenced with Identity {
-	override def toString: String = this match {
-		case InventoryItemCreated(id, name, sequence) => "seq: " + sequence + " - Item " + name + " created (id:" + id.toString() + ")"
-		case InventoryItemDeactivated(id, sequence) => "seq: " + sequence + " - Item deactivated (id:" + id.toString() + ")"
-		case InventoryItemRenamed(id, newName, sequence) => "seq: " + sequence + " - Item renamed to " + newName + " (id:" + id.toString() + ")"
-		case ItemsCheckedInToInventory(id, count, sequence) => "seq: " + sequence + " - Check-in of " + count.toString() + " item/s (id:" + id.toString() + ")"
-		case ItemsRemovedFromInventory(id, count, sequence) => "seq: " + sequence + " - Removed " + count.toString() + " item/s (id:" + id.toString() + ")"
-		case _ => ""
-	}
-
 	def asHistory: List[Event] = List(this)
 }
 

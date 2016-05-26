@@ -1,11 +1,6 @@
-package SimpleCqrsScala.CommandSide.CommandHandler
+package SimpleCqrsScala.CommandSide
 
 import java.util.UUID
-
-import SimpleCqrsScala.CommandSide.Commands._
-import SimpleCqrsScala.CommandSide.Events._
-import SimpleCqrsScala.CommandSide.InventoryItem._
-import SimpleCqrsScala.CommandSide.EventStore._
 
 object CommandHandler {
 	def apply(eventStore: Repository) = new CommandHandler(eventStore)

@@ -1,8 +1,7 @@
-package SimpleCqrsScala.CommandSide.Test.InventoryItemTests
+package SimpleCqrsScala.CommandSide.Test
 
 import org.specs2.mutable._
-import SimpleCqrsScala.CommandSide.InventoryItem._
-import SimpleCqrsScala.CommandSide.Events._
+import SimpleCqrsScala.CommandSide._
 
 import java.util.UUID
 

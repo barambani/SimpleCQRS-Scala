@@ -1,8 +1,6 @@
-package SimpleCqrsScala.CommandSide.EventStore
+package SimpleCqrsScala.CommandSide
 
 import java.util.UUID
-
-import SimpleCqrsScala.CommandSide.Events._
 
 trait Repository {
 	def Save(es: List[Event]): Unit 

@@ -1,8 +1,6 @@
-package SimpleCqrsScala.CommandSide.InventoryItem
+package SimpleCqrsScala.CommandSide
 
 import java.util.UUID
-
-import SimpleCqrsScala.CommandSide.Events._
 
 object InventoryItem {
 

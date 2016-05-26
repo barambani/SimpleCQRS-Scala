@@ -1,13 +1,10 @@
-package SimpleCqrsScala.CommandSide.Test.CommandHandlerTests
+package SimpleCqrsScala.CommandSide.Test
 
 import java.util.UUID
 import org.specs2.mutable._
 import scala.collection.mutable._
 
-import SimpleCqrsScala.CommandSide.Commands._
-import SimpleCqrsScala.CommandSide.Events._
-import SimpleCqrsScala.CommandSide.EventStore._
-import SimpleCqrsScala.CommandSide.CommandHandler._
+import SimpleCqrsScala.CommandSide._
 
 object CommandHandlerSpec extends Specification {
 
