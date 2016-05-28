@@ -13,6 +13,7 @@ lazy val simpleCqrsScala = (project in file("."))
 	.settings(commonSettings: _*)
 
 initialCommands in console := """
+	|import java.util.UUID
     |import scalaz._
     |import Scalaz._
     |import SimpleCqrsScala.CommandSide._

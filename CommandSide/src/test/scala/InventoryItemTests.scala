@@ -74,5 +74,21 @@ object InventoryItemSpec extends Specification {
 
 			finalState.itemsCount mustEqual 6
 	  	}
+
+	  	"have the correct state after commands application" in {
+
+  			val history = List(
+  				ItemsCheckedInToInventory(id, 10, 3),
+  				ItemsCheckedInToInventory(id, 10, 2),
+	  			InventoryItemCreated(id, "Test Inventory Item", 1)
+  			)
+	  		
+	  		val item = InventoryItem(history)
+
+	  		val firstEvolution = item.removeItemsFromInventory(2)
+	  		val secondEvolution = item.removeItemsFromInventory(2)
+
+			secondEvolution.head.sequence mustEqual 5
+	  	}
 	}
 }

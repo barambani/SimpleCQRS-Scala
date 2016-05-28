@@ -14,15 +14,13 @@ sealed trait Event extends Sequenced with Identified {
 	def asHistory: List[Event] = List(this)
 }
 
-// case class CreateOrder(id: UUID, customerId: UUID, customerName: UUID) extends Command
-// case class AddInventoryItemToOrder(id: UUID, invetoryItemId: UUID, quantity: Int) extends Command
-// case class RemoveInventoryItemFromOrder(id: UUID, invetoryItemId: UUID, quantity: Int) extends Command
-// case class AddShippingAddressToOrder(id: UUID, invetoryItemId: UUID, quantity: Int) extends Command
-// case class PayForTheOrder(id: UUID, invetoryItemId: UUID, quantity: Int) extends Command
-// case class SubmitTheOrder(id: UUID) extends Command
-
 //	Order
 case class OrderCreated(id: UUID, name: String, sequence: Long) extends Event
+case class InventoryItemAddedToOrder(id: UUID, inventoryItemId: UUID, quantity: Int) extends Event
+case class InventoryItemRemovedFromOrder(id: UUID, inventoryItemId: UUID, quantity: Int) extends Event
+case class ShippingAddressAddedToOrder(id: UUID, shippingAddress: String) extends Event
+case class OrderPayed(id: UUID) extends Event
+case class OrderSubmitted(id: UUID) extends Event
 
 //	Inventory Item
 case class InventoryItemCreated(id: UUID, name: String, sequence: Long) extends Event
