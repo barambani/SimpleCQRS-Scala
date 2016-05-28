@@ -9,4 +9,11 @@ lazy val querySide = project in file("QuerySide")
 
 lazy val simpleCqrsScala = (project in file("."))
 	.aggregate(commandSide, querySide)
+	.dependsOn(commandSide, querySide)
 	.settings(commonSettings: _*)
+
+initialCommands in console := """
+    |import scalaz._
+    |import Scalaz._
+    |import SimpleCqrsScala.CommandSide._
+""".stripMargin

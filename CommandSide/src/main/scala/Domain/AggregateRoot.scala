@@ -1,6 +1,7 @@
-package SimpleCqrsScala.CommandSide
+package SimpleCqrsScala.CommandSide.Domain
 
 import java.util.UUID
+import SimpleCqrsScala.CommandSide._
 
 trait Versioned {
 	val version: Long

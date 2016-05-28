@@ -1,25 +1,19 @@
-package SimpleCqrsScala.CommandSide
+package SimpleCqrsScala.CommandSide.Domain
 
 import java.util.UUID
+import SimpleCqrsScala.CommandSide._
 
 object InventoryItem {
-	private lazy val InitialState = new InventoryItem(new UUID(0, 0), "", false)
-	def apply(history: List[Event]): InventoryItem = AggregateRoot.evolve(InitialState, history)
+	def apply(history: List[Event]): InventoryItem = AggregateRoot.evolve(new InventoryItem, history)
 }
 
 class InventoryItem private (
-	val id: UUID, 
-	val name: String, 
-	val isActivated: Boolean,
+	val id: UUID = new UUID(0, 0), 
+	val name: String = "",
+	val isActivated: Boolean = false,
 	val itemsCount: Int = 0,
 	val version: Long = 0) extends Identity with Versioned {
 	
-	private def this() = this(
-		InventoryItem.InitialState.id,
-		InventoryItem.InitialState.name,
-		InventoryItem.InitialState.isActivated
-	)
-
 	private def countAfterCheckIn(toCheckin: Int): Int = itemsCount + toCheckin
 	private def countAfterRemoval(toRemove: Int): Int = itemsCount - toRemove
 
