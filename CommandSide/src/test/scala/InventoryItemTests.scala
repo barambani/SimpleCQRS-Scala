@@ -2,6 +2,7 @@ package SimpleCqrsScala.CommandSide.Test
 
 import org.specs2.mutable._
 import SimpleCqrsScala.CommandSide._
+import SimpleCqrsScala.CommandSide.Domain._
 
 import java.util.UUID
 
@@ -86,7 +87,10 @@ object InventoryItemSpec extends Specification {
 	  		val item = InventoryItem(history)
 
 	  		val firstEvolution = item.removeItemsFromInventory(2)
-	  		val secondEvolution = item.removeItemsFromInventory(2)
+	  		val itemAfterFirstEvolution = AggregateRoot.evolve(item, firstEvolution)
+
+	  		val secondEvolution = itemAfterFirstEvolution.removeItemsFromInventory(2)
+	  		val itemAfterSecondEvolution = AggregateRoot.evolve(itemAfterFirstEvolution, secondEvolution)
 
 			secondEvolution.head.sequence mustEqual 5
 	  	}

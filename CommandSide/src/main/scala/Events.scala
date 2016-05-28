@@ -16,11 +16,11 @@ sealed trait Event extends Sequenced with Identified {
 
 //	Order
 case class OrderCreated(id: UUID, name: String, sequence: Long) extends Event
-case class InventoryItemAddedToOrder(id: UUID, inventoryItemId: UUID, quantity: Int) extends Event
-case class InventoryItemRemovedFromOrder(id: UUID, inventoryItemId: UUID, quantity: Int) extends Event
-case class ShippingAddressAddedToOrder(id: UUID, shippingAddress: String) extends Event
-case class OrderPayed(id: UUID) extends Event
-case class OrderSubmitted(id: UUID) extends Event
+case class InventoryItemAddedToOrder(id: UUID, inventoryItemId: UUID, quantity: Int, sequence: Long) extends Event
+case class InventoryItemRemovedFromOrder(id: UUID, inventoryItemId: UUID, quantity: Int, sequence: Long) extends Event
+case class ShippingAddressAddedToOrder(id: UUID, shippingAddress: String, sequence: Long) extends Event
+case class OrderPayed(id: UUID, sequence: Long) extends Event
+case class OrderSubmitted(id: UUID, sequence: Long) extends Event
 
 //	Inventory Item
 case class InventoryItemCreated(id: UUID, name: String, sequence: Long) extends Event

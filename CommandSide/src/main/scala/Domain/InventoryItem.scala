@@ -4,16 +4,23 @@ import java.util.UUID
 import SimpleCqrsScala.CommandSide._
 
 object InventoryItem {
-	def apply(history: List[Event]): InventoryItem = AggregateRoot.evolve(new InventoryItem, history)
+	private lazy val InitialState = new InventoryItem(new UUID(0, 0), "", false)
+	def apply(history: List[Event]): InventoryItem = AggregateRoot.evolve(InitialState, history)
 }
 
 class InventoryItem private (
-	val id: UUID = new UUID(0, 0), 
-	val name: String = "",
-	val isActivated: Boolean = false,
+	val id: UUID, 
+	val name: String, 
+	val isActivated: Boolean,
 	val itemsCount: Int = 0,
 	val version: Long = 0) extends Identity with Versioned {
 	
+	private def this() = this(
+		InventoryItem.InitialState.id,
+		InventoryItem.InitialState.name,
+		InventoryItem.InitialState.isActivated
+	)
+
 	private def countAfterCheckIn(toCheckin: Int): Int = itemsCount + toCheckin
 	private def countAfterRemoval(toRemove: Int): Int = itemsCount - toRemove
 
@@ -52,7 +59,7 @@ class InventoryItem private (
 	def checkInItemsToInventory(count: Int): List[Event] =
 		ItemsCheckedInToInventory(id, count, nextStateVersion) asHistory
 
-	def removeItemsFromInventory(count: Int): List[Event] =
+	def removeItemsFromInventory(count: Int): List[Event] = 
 		//if(itemsCount - count < 0) ERROR
 		ItemsRemovedFromInventory(id, count, nextStateVersion) asHistory
 }

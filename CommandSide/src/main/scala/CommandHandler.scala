@@ -1,10 +1,11 @@
 package SimpleCqrsScala.CommandSide
 
 import java.util.UUID
+import SimpleCqrsScala.CommandSide.Domain._
 
 object CommandHandler {
 	def apply(eventStore: Repository) = new CommandHandler(eventStore)
-} 
+}
 
 class CommandHandler(eventStore: Repository) {
 
@@ -30,12 +31,10 @@ class CommandHandler(eventStore: Repository) {
 		}
 
 		def invokeBehaviorOn(id: UUID, behavior: InventoryItem => List[Event]): List[Event] = {
-
 			def readHistory(id: UUID): List[Event] = eventStore GetHistoryById id
+			def applyBehaviorTo: UUID => List[Event] = behavior compose InventoryItem.apply _ compose readHistory _
 
-			lazy val applyBehaviorTo: UUID => List[Event] = behavior compose InventoryItem.apply _ compose readHistory _
-
-			applyBehaviorTo(id)		
+			applyBehaviorTo(id)
 		}
 	}
 }
