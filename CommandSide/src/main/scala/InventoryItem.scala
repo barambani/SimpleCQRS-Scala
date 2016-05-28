@@ -3,12 +3,8 @@ package SimpleCqrsScala.CommandSide
 import java.util.UUID
 
 object InventoryItem {
-
-	private val initialId = new UUID(0, 0)
-	private val initialState = new InventoryItem()
-
-	def apply(history: List[Event]): InventoryItem =
-		(history foldRight initialState) ((e, s) => s getStateWhen e)
+	private lazy val InitialState = new InventoryItem(new UUID(0, 0), "", false)
+	def apply(history: List[Event]): InventoryItem = AggregateRoot.rehydrate(InitialState, history)
 }
 
 class InventoryItem private (
@@ -18,18 +14,20 @@ class InventoryItem private (
 	val itemsCount: Int = 0,
 	val version: Long = 0) {
 	
-	private def this() = this(InventoryItem.initialId, "", false)
+	private def this() = this(
+		InventoryItem.InitialState.id,
+		InventoryItem.InitialState.name,
+		InventoryItem.InitialState.isActivated
+	)
 
-	private def hasTheCorrectId(event: Identity): Boolean = 
-		id == new UUID(0, 0) || event.id == id
-
-	private def nextVersion: Long = version + 1
+	private def hasTheCorrectId(event: Identity): Boolean = id == new UUID(0, 0) || event.id == id
 	private def isInSequence(event: Sequenced): Boolean = event.sequence == nextVersion
 
+	private def nextVersion: Long = version + 1
 	private def countAfterCheckIn(toCheckin: Int): Int = itemsCount + toCheckin
 	private def countAfterRemoval(toRemove: Int): Int = itemsCount - toRemove
 
-	def getStateWhen(event: Event): InventoryItem = 
+	def getNewStateWhen(event: Event): InventoryItem = 
 
 		if(!isInSequence(event)) this // TODO: Error in this case
 		else if(!hasTheCorrectId(event)) this // TODO: Error in this case
