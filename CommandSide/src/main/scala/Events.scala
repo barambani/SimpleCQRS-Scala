@@ -2,7 +2,7 @@ package SimpleCqrsScala.CommandSide
 
 import java.util.UUID
 
-sealed trait Identified {
+trait Identified {
 	val id: UUID
 }
 
@@ -15,7 +15,7 @@ sealed trait Event extends Sequenced with Identified {
 }
 
 //	Order
-case class OrderCreated(id: UUID, name: String, sequence: Long) extends Event
+case class NewOrderCreated(id: UUID, name: String, sequence: Long) extends Event
 case class InventoryItemAddedToOrder(id: UUID, inventoryItemId: UUID, quantity: Int, sequence: Long) extends Event
 case class InventoryItemRemovedFromOrder(id: UUID, inventoryItemId: UUID, quantity: Int, sequence: Long) extends Event
 case class ShippingAddressAddedToOrder(id: UUID, shippingAddress: String, sequence: Long) extends Event

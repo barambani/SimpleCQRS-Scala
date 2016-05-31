@@ -8,6 +8,8 @@ import SimpleCqrsScala.CommandSide._
 
 object CommandHandlerSpec extends Specification {
 
+	import CommandHandler._
+
 	"The Command Handler" should {
 
 		val id = UUID.randomUUID
@@ -19,18 +21,17 @@ object CommandHandlerSpec extends Specification {
 			ItemsCheckedInToInventory(id, 25, 2),
 			InventoryItemCreated(id, "First Inventory Item Name", 1)
 		)
-		lazy val initHandlerWithStore =  CommandHandler.apply _ compose TestEventStore.apply _
+		
+		def eventStoreRetriever(idContainer: Identified): List[Event] = history
+		def handleWithSideEffect = handle(eventStoreRetriever) _
 
 	  	"save an InventoryItemCreated event when receives the command CreateInventoryItem" in {
 
 	  		val expectedName = "test-create-command"
 
-	  		var store = MutableList[Event]()
-	  		lazy val handler = initHandlerWithStore(store)
+  			lazy val evolution = handleWithSideEffect(CreateInventoryItem(id, expectedName))
 
-  			handler handle CreateInventoryItem(id, expectedName)
-
-			store.head match {
+			evolution.head match {
 				case InventoryItemCreated(eid,name,sequence) => {
 					eid mustEqual id
 					name mustEqual expectedName
@@ -44,12 +45,9 @@ object CommandHandlerSpec extends Specification {
 
 	  		val expectedName = "new item name"
 
-	  		var store = MutableList[Event]() ++= history
-	  		lazy val handler = initHandlerWithStore(store)
-
-  			handler handle RenameInventoryItem(id, expectedName)
+	  		lazy val evolution = handleWithSideEffect(RenameInventoryItem(id, expectedName))
 			
-			store.head match {
+			evolution.head match {
 				case InventoryItemRenamed(eid,newName,sequence) => newName mustEqual expectedName
 				case _ => ko("The event saved into store is not correct")
 			}
@@ -60,12 +58,9 @@ object CommandHandlerSpec extends Specification {
 	  		val id = UUID.randomUUID
 	  		val expectedCheckedInCount = 4
 
-	  		var store = MutableList[Event]() ++= history
-	  		lazy val handler = initHandlerWithStore(store)
-
-  			handler handle CheckInItemsToInventory(id, expectedCheckedInCount)
+  			lazy val evolution = handleWithSideEffect(CheckInItemsToInventory(id, expectedCheckedInCount))
   			
-  			store.head match {
+  			evolution.head match {
 				case ItemsCheckedInToInventory(eid,count,sequence) => count mustEqual expectedCheckedInCount
 				case _ => ko("The event saved into store is not correct")
 			}
@@ -76,23 +71,12 @@ object CommandHandlerSpec extends Specification {
 	  		val id = UUID.randomUUID
 	  		val expectedCheckedInCount = 3
 
-			var store = MutableList[Event]() ++= history
-	  		lazy val handler = initHandlerWithStore(store)
-
-  			handler handle RemoveItemsFromInventory(id, expectedCheckedInCount)
+  			lazy val evolution = handleWithSideEffect(RemoveItemsFromInventory(id, expectedCheckedInCount))
   			
-  			store.head match {
+  			evolution.head match {
 				case ItemsRemovedFromInventory(eid,count,sequence) => count mustEqual expectedCheckedInCount
 				case _ => ko("The event saved into store is not correct")
 			}
 	  	}
   	}
-}
-
-private object TestEventStore {
-	def apply(store: MutableList[Event]): TestEventStore = new TestEventStore(store)
-}
-private class TestEventStore(var store: MutableList[Event]) extends Repository {
-	def Save(es: List[Event]): Unit = es.foreach(e => store.+=:(e))
-	def GetHistoryById(id: UUID): List[Event] = (store filter (e => e.id == id)) toList
 }

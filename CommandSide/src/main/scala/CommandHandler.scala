@@ -4,37 +4,26 @@ import java.util.UUID
 import SimpleCqrsScala.CommandSide.Domain._
 
 object CommandHandler {
-	def apply(eventStore: Repository) = new CommandHandler(eventStore)
-}
+	
+	def handle(retrieveHistory: Identified => List[Event])(command: Command): List[Event] =
+		applyCommand(command) map (f => (f compose retrieveHistory)(command)) getOrElse Nil
 
-class CommandHandler(eventStore: Repository) {
+	private def applyCommand(command: Command): Option[List[Event] => List[Event]] =
+		(ApplyCommandToInventoryItem lift command) orElse (ApplyCommandToOrder lift command)
 
-	def handle(command: Command): Unit = {
+	private def ApplyCommandToInventoryItem: PartialFunction[Command, List[Event] => List[Event]] = {
+		case CreateInventoryItem(id, name) 		=> Nil => InventoryItemCreated(id, name, 1) asHistory
+		case DeactivateInventoryItem(_) 		=> nextEvolutionFor[InventoryItem](i => i deactivateInventoryItem)
+		case RenameInventoryItem(_, newName) 	=> nextEvolutionFor[InventoryItem](i => i renameInventoryItem newName)
+		case CheckInItemsToInventory(_, count)	=> nextEvolutionFor[InventoryItem](i => i checkInItemsToInventory count)
+		case RemoveItemsFromInventory(_, count)	=> nextEvolutionFor[InventoryItem](i => i removeItemsFromInventory count)
+	}
 
-		command match {
-			case CreateInventoryItem(id, name) => 
-				eventStore Save InventoryItemCreated(id, name, 1).asHistory
+	private def ApplyCommandToOrder: PartialFunction[Command, List[Event] => List[Event]] = {
+		case CreateOrder(id, customerId, customerName) => Nil => NewOrderCreated(id, s"$customerId - $customerName", 1) asHistory
+	}
 
-			case DeactivateInventoryItem(id) => 
-				eventStore Save invokeBehaviorOn(id, i => i deactivateInventoryItem)
-
-			case RenameInventoryItem(id, newName) => 
-				eventStore Save invokeBehaviorOn(id, i => i renameInventoryItem newName)
-
-			case CheckInItemsToInventory(id, count) => 
-				eventStore Save invokeBehaviorOn(id, i => i checkInItemsToInventory count)
-
-			case RemoveItemsFromInventory(id, count) => 
-				eventStore Save invokeBehaviorOn(id, i => i removeItemsFromInventory count)
-
-			case _ => 
-		}
-
-		def invokeBehaviorOn(id: UUID, behavior: InventoryItem => List[Event]): List[Event] = {
-			def readHistory(id: UUID): List[Event] = eventStore GetHistoryById id
-			def applyBehaviorTo: UUID => List[Event] = behavior compose InventoryItem.apply _ compose readHistory _
-
-			applyBehaviorTo(id)
-		}
+	private def nextEvolutionFor[A: Aggregate](behavior: A => List[Event]): List[Event] => List[Event] = {
+		behavior compose AggregateRoot.createFrom[A] _
 	}
 }

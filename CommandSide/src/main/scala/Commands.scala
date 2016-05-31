@@ -2,7 +2,7 @@ package SimpleCqrsScala.CommandSide
 
 import java.util.UUID
 
-sealed trait Command
+sealed trait Command extends Identified
 
 //	Order
 case class CreateOrder(id: UUID, customerId: UUID, customerName: UUID) extends Command
