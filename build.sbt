@@ -17,4 +17,5 @@ initialCommands in console := """
     |import scalaz._
     |import Scalaz._
     |import SimpleCqrsScala.CommandSide._
+    |import SimpleCqrsScala.CommandSide.Domain._
 """.stripMargin
