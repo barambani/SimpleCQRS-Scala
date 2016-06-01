@@ -12,3 +12,8 @@ libraryDependencies ++= Seq(
 )
 
 scalacOptions in Test ++= Seq("-Yrangepos")
+
+scalacOptions ++= Seq (
+	"-feature",
+	"-deprecation"
+)

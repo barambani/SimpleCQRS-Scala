@@ -43,16 +43,16 @@ class InventoryItem private (
 
 	//	Behavior
 	def deactivateInventoryItem: List[Event] =
-		InventoryItemDeactivated(id, nextStateVersion) asHistory
+		InventoryItemDeactivated(id, nextStateVersion).asHistory
 
 	def renameInventoryItem(newName: String): List[Event] =
 		//if(newName,ieEmpty) ERROR
-		InventoryItemRenamed(id, newName, nextStateVersion) asHistory
+		InventoryItemRenamed(id, newName, nextStateVersion).asHistory
 
 	def checkInItemsToInventory(count: Int): List[Event] =
-		ItemsCheckedInToInventory(id, count, nextStateVersion) asHistory
+		ItemsCheckedInToInventory(id, count, nextStateVersion).asHistory
 
 	def removeItemsFromInventory(count: Int): List[Event] = 
 		//if(itemsCount - count < 0) ERROR
-		ItemsRemovedFromInventory(id, count, nextStateVersion) asHistory
+		ItemsRemovedFromInventory(id, count, nextStateVersion).asHistory
 }
