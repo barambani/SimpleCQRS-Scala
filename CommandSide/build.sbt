@@ -15,5 +15,6 @@ scalacOptions in Test ++= Seq("-Yrangepos")
 
 scalacOptions ++= Seq (
 	"-feature",
-	"-deprecation"
+	"-deprecation",
+	"-target:jvm-1.8"
 )

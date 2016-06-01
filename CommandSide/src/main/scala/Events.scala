@@ -15,7 +15,7 @@ sealed trait Event extends Sequenced with Identified {
 }
 
 //	Order
-case class OrderCreated(id: UUID, name: String, sequence: Long) extends Event
+case class OrderCreated(id: UUID, description: String, sequence: Long) extends Event
 case class InventoryItemAddedToOrder(id: UUID, inventoryItemId: UUID, quantity: Int, sequence: Long) extends Event
 case class InventoryItemRemovedFromOrder(id: UUID, inventoryItemId: UUID, quantity: Int, sequence: Long) extends Event
 case class ShippingAddressAddedToOrder(id: UUID, shippingAddress: String, sequence: Long) extends Event

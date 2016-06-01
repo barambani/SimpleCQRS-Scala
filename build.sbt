@@ -19,3 +19,5 @@ initialCommands in console := """
     |import SimpleCqrsScala.CommandSide._
     |import SimpleCqrsScala.CommandSide.Domain._
 """.stripMargin
+
+logLevel := Level.Info
