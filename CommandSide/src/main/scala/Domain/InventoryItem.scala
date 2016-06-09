@@ -2,9 +2,32 @@ package SimpleCqrsScala.CommandSide.Domain
 
 import java.util.UUID
 import SimpleCqrsScala.CommandSide._
+import SimpleCqrsScala.CommandSide.Domain.DomainTypes._
+
+import scalaz._
 
 object InventoryItem {
-	def apply(history: List[Event]): InventoryItem = AggregateRoot.evolve(new InventoryItem, history)
+
+	import AggregateRoot._
+
+	def apply(history: List[Event]): InventoryItem = evolve(new InventoryItem, history)
+
+	//	Behavior
+	def deactivateInventoryItem: InventoryItemS = 
+		getState(i => InventoryItemDeactivated(i.id, i.nextStateVersion).asHistory)
+
+	def checkInItemsToInventory(count: Int): InventoryItemS =
+		getState(i => ItemsCheckedInToInventory(i.id, count, i.nextStateVersion).asHistory)
+
+	def renameInventoryItem(newName: String): InventoryItemS = getState(
+		i => if(i.theNameIsValid(newName)) InventoryItemRenamed(i.id, newName, i.nextStateVersion).asHistory 
+			else Nil // TODO: Error, the new name is not valid
+	)
+	
+	def removeItemsFromInventory(count: Int): InventoryItemS = getState(
+		i => if(i.itemsCanBeRemoved(count)) ItemsRemovedFromInventory(i.id, count, i.nextStateVersion).asHistory
+			else Nil // TODO: Error, not enough items to remove
+	)
 }
 
 class InventoryItem private (
@@ -46,20 +69,4 @@ class InventoryItem private (
 				
 				case _ => this
 			}
-
-	//	Behavior
-	def deactivateInventoryItem: List[Event] =
-		InventoryItemDeactivated(id, nextStateVersion).asHistory
-
-	def renameInventoryItem(newName: String): List[Event] =
-		if(theNameIsValid(newName)) InventoryItemRenamed(id, newName, nextStateVersion).asHistory
-		else Nil // TODO: Error, the new name is not valid
-
-	def checkInItemsToInventory(count: Int): List[Event] =
-		ItemsCheckedInToInventory(id, count, nextStateVersion).asHistory
-
-	def removeItemsFromInventory(count: Int): List[Event] = 
-		if(itemsCanBeRemoved(count)) ItemsRemovedFromInventory(id, count, nextStateVersion).asHistory
-		else Nil // TODO: Error, not enough items to remove
-		
 }

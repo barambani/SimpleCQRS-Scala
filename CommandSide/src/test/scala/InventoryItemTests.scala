@@ -4,9 +4,15 @@ import org.specs2.mutable._
 import SimpleCqrsScala.CommandSide._
 import SimpleCqrsScala.CommandSide.Domain._
 
+import scalaz._
+
 import java.util.UUID
 
 object InventoryItemSpec extends Specification {
+
+	import InventoryItem._
+	import AggregateRoot._
+	import DomainTypes._
 
 	val id = UUID.randomUUID
 
@@ -76,7 +82,7 @@ object InventoryItemSpec extends Specification {
 			finalState.itemsCount mustEqual 6
 	  	}
 
-	  	"have the correct state after commands application" in {
+	  	"generates the correct events after commands application" in {
 
   			val history = List(
   				ItemsCheckedInToInventory(id, 10, 3),
@@ -84,15 +90,37 @@ object InventoryItemSpec extends Specification {
 	  			InventoryItemCreated(id, "Test Inventory Item", 1)
   			)
 	  		
-	  		val item = InventoryItem(history)
+	  		lazy val item = InventoryItem(history)
 
-	  		val firstEvolution = item.removeItemsFromInventory(2)
-	  		val itemAfterFirstEvolution = AggregateRoot.evolve(item, firstEvolution)
+	  		lazy val newState: InventoryItemS = for {
+	  			es1 <- removeItemsFromInventory(2)
+	  			__  <- State.modify { s: InventoryItem => evolve(s,es1) }
+	  			es2 <- removeItemsFromInventory(2)
+	  			__  <- State.modify { s: InventoryItem => evolve(s,es2) }
+	  		} yield  es2 ::: es1
 
-	  		val secondEvolution = itemAfterFirstEvolution.removeItemsFromInventory(2)
-	  		val itemAfterSecondEvolution = AggregateRoot.evolve(itemAfterFirstEvolution, secondEvolution)
+			newState.eval(item).head.sequence mustEqual 5
+	  	}
 
-			secondEvolution.head.sequence mustEqual 5
+	  	"has the correct state after commands application" in {
+
+  			val history = List(
+  				ItemsCheckedInToInventory(id, 10, 3),
+  				ItemsCheckedInToInventory(id, 10, 2),
+	  			InventoryItemCreated(id, "Test Inventory Item", 1)
+  			)
+	  		
+	  		lazy val item = InventoryItem(history)
+
+	  		lazy val newState: InventoryItemS = for {
+	  			es1 <- removeItemsFromInventory(2)
+	  			__  <- State.modify { s: InventoryItem => evolve(s,es1) }
+	  			es2 <- removeItemsFromInventory(2)
+	  			__  <- State.modify { s: InventoryItem => evolve(s,es2) }
+	  		} yield es2 ::: es1
+
+	  		newState.exec(item).itemsCount mustEqual 16
+	  		newState.exec(item).version mustEqual 5
 	  	}
 	}
 }

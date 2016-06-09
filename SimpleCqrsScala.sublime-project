@@ -1,7 +1,7 @@
 {
-  "folders": [{
-    "path": "../SimpleCQRS-Scala"
-  }, {
-    "path": "../SimpleCQRS-Scala/target/External Libraries"
-  }]
+	"folders": [{
+		"path": "../SimpleCQRS-Scala"
+	}, {
+		"path": "../SimpleCQRS-Scala/target/External Libraries"
+	}]
 }

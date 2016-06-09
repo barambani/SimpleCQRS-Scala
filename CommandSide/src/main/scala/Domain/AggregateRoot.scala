@@ -3,6 +3,8 @@ package SimpleCqrsScala.CommandSide.Domain
 import java.util.UUID
 import SimpleCqrsScala.CommandSide._
 
+import scalaz._
+
 trait Versioned {
 	val version: Long
 	protected def nextStateVersion: Long = version + 1
@@ -33,9 +35,16 @@ object Aggregate {
 }
 
 object AggregateRoot {
+
+	import DomainTypes._
 	
 	def evolve[A : Aggregate](initialState: A, history: List[Event]): A = 
 		(history foldRight initialState) ((e, s) => implicitly[Aggregate[A]].getNewStateFor(s, e))
 
 	def createFrom[A: Aggregate](history: List[Event]): A = implicitly[Aggregate[A]].apply(history)
+
+	def getState[A : Aggregate](esg: A => List[Event]): EvolvableState[A] = for {
+		es 	<- State.gets(esg)
+		_ 	<- State.modify { s: A => AggregateRoot.evolve(s, es) }
+	} yield es
 }
