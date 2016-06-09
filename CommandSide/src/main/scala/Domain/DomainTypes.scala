@@ -11,6 +11,8 @@ object DomainTypes {
 	type InventoryItemS = EvolvableState[InventoryItem]
 	type OrderS = EvolvableState[Order]
 
+	def zeroEvolvableState[A] = State.state[A, List[Event]](Nil)
+
 	def mergeStates[A](fs: EvolvableState[A], ps: EvolvableState[A]): EvolvableState[A] = State { 
 		(s: A) => {
 			lazy val (psS, psT) = ps.run(s)
@@ -18,13 +20,7 @@ object DomainTypes {
 			(fsS, fsT ::: psT)
 		}
 	}
-	
-	def getFinalState[A](states: Seq[EvolvableState[A]]): EvolvableState[A] = {
-		
-		def iterate(state: EvolvableState[A], xs: Seq[EvolvableState[A]]): EvolvableState[A] =
-			if(xs.isEmpty) state
-			else iterate(mergeStates(xs.head, state), xs.tail)
 
-		iterate(State.state(Nil), states)
-	}
+	def mergeStateSeq[A](states: Seq[EvolvableState[A]]): EvolvableState[A] = 
+		(states foldRight zeroEvolvableState[A]) ((fs,ps) => mergeStates(fs, ps))
 }

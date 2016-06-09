@@ -91,13 +91,9 @@ object InventoryItemSpec extends Specification {
   			)
 	  		
 	  		lazy val item = InventoryItem(history)
+	  		lazy val states = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7))
 
-	  		lazy val newState: InventoryItemS = for {
-	  			es1 <- removeItemsFromInventory(2)
-	  			__  <- State.modify { s: InventoryItem => evolve(s,es1) }
-	  			es2 <- removeItemsFromInventory(2)
-	  			__  <- State.modify { s: InventoryItem => evolve(s,es2) }
-	  		} yield  es2 ::: es1
+	  		lazy val newState = mergeStateSeq(states)
 
 			newState.eval(item).head.sequence mustEqual 5
 	  	}
@@ -111,16 +107,12 @@ object InventoryItemSpec extends Specification {
   			)
 	  		
 	  		lazy val item = InventoryItem(history)
+	  		lazy val states = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7), checkInItemsToInventory(3))
+			
+			lazy val newState = mergeStateSeq(states)
 
-	  		lazy val newState: InventoryItemS = for {
-	  			es1 <- removeItemsFromInventory(2)
-	  			__  <- State.modify { s: InventoryItem => evolve(s,es1) }
-	  			es2 <- removeItemsFromInventory(2)
-	  			__  <- State.modify { s: InventoryItem => evolve(s,es2) }
-	  		} yield es2 ::: es1
-
-	  		newState.exec(item).itemsCount mustEqual 16
-	  		newState.exec(item).version mustEqual 5
+	  		newState.exec(item).itemsCount mustEqual 14
+	  		newState.exec(item).version mustEqual 6
 	  	}
 	}
 }

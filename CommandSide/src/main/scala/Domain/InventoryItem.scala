@@ -14,17 +14,17 @@ object InventoryItem {
 
 	//	Behavior
 	def deactivateInventoryItem: InventoryItemS = 
-		getState(i => InventoryItemDeactivated(i.id, i.nextStateVersion).asHistory)
+		getNewState(i => InventoryItemDeactivated(i.id, i.nextStateVersion).asHistory)
 
 	def checkInItemsToInventory(count: Int): InventoryItemS =
-		getState(i => ItemsCheckedInToInventory(i.id, count, i.nextStateVersion).asHistory)
+		getNewState(i => ItemsCheckedInToInventory(i.id, count, i.nextStateVersion).asHistory)
 
-	def renameInventoryItem(newName: String): InventoryItemS = getState(
+	def renameInventoryItem(newName: String): InventoryItemS = getNewState(
 		i => if(i.theNameIsValid(newName)) InventoryItemRenamed(i.id, newName, i.nextStateVersion).asHistory 
 			else Nil // TODO: Error, the new name is not valid
 	)
 	
-	def removeItemsFromInventory(count: Int): InventoryItemS = getState(
+	def removeItemsFromInventory(count: Int): InventoryItemS = getNewState(
 		i => if(i.itemsCanBeRemoved(count)) ItemsRemovedFromInventory(i.id, count, i.nextStateVersion).asHistory
 			else Nil // TODO: Error, not enough items to remove
 	)
