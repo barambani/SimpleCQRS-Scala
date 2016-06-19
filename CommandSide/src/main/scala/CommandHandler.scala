@@ -5,7 +5,7 @@ import SimpleCqrsScala.CommandSide.Domain._
 
 object CommandHandler {
 
-	import DomainTypes._
+	import DomainStates._
 	import InventoryItem._
 	import Order._
 	

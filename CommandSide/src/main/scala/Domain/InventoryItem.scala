@@ -2,7 +2,7 @@ package SimpleCqrsScala.CommandSide.Domain
 
 import java.util.UUID
 import SimpleCqrsScala.CommandSide._
-import SimpleCqrsScala.CommandSide.Domain.DomainTypes._
+import SimpleCqrsScala.CommandSide.Domain.DomainStates._
 
 import scalaz._
 

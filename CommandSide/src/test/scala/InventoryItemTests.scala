@@ -12,7 +12,7 @@ object InventoryItemSpec extends Specification {
 
 	import InventoryItem._
 	import AggregateRoot._
-	import DomainTypes._
+	import DomainStates._
 
 	val id = UUID.randomUUID
 

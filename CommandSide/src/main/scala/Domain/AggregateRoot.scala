@@ -36,7 +36,7 @@ object Aggregate {
 
 object AggregateRoot {
 
-	import DomainTypes._
+	import DomainStates._
 	
 	def evolve[A : Aggregate](initialState: A, history: List[Event]): A = 
 		(history foldRight initialState) ((e, s) => implicitly[Aggregate[A]].getNewStateFor(s, e))

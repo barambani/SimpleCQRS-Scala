@@ -12,7 +12,7 @@ import java.util.UUID
 object OrderSpec extends Specification {
 
 	import AggregateRoot._
-	import DomainTypes._
+	import DomainStates._
 
 	val orderId = UUID.randomUUID
 	val inventoryItemId1 = UUID.randomUUID

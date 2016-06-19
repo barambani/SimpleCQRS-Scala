@@ -4,7 +4,7 @@ import SimpleCqrsScala.CommandSide._
 
 import scalaz._
 
-object DomainTypes {
+object DomainStates {
 
 	type EvolvableState[A] = State[A, List[Event]]
 

@@ -5,5 +5,5 @@ object Printer {
 }
 
 object MapOps {
-	def updateItem[I,A](m: Map[I, A])(i: I)(f: A => A): Map[I, A] = (m - i) + (i -> (f compose m.apply _)(i))
+	def updateValue[I,A](m: Map[I, A])(i: I)(f: A => A): Map[I, A] = (m - i) + (i -> (f compose m.apply _)(i))
 }
