@@ -53,15 +53,15 @@ class Order private (
 	val items: Map[UUID, Int] = Map.empty,
 	val version: Long = 0) extends Identity with Versioned {
 
-	private def addItemsToOrder(itemId: UUID, quantity: Int): Map[UUID, Int] =
-		if(items contains itemId) (items - itemId) + (itemId -> (items(itemId) + quantity))
+	private def addOrUpdateItem: UUID => (Int => Int) => Map[UUID, Int] = MapOps.updateItem(items) _
+
+	private def getItemsAfterAdditionOf(itemId: UUID, quantity: Int): Map[UUID, Int] =
+		if(items contains itemId) addOrUpdateItem(itemId)(ei => ei + quantity)
 		else items + (itemId -> quantity)
 
-	private def removeItemsFromOrder(itemId: UUID, quantty: Int): Map[UUID, Int] =
-		items map (
-			i => if(i._1 == itemId) i._1 -> (i._2 - 1) 
-				 else i
-		)
+	private def getItemsAfterRemovalOf(itemId: UUID, quantity: Int): Map[UUID, Int] =
+		if(items contains itemId) addOrUpdateItem(itemId)(ei => ei - quantity)
+		else items // TODO: May be error? trying to remove unexisting item
 
 	//	Domain logic
 	private def theItemCanBeRemoved(itemId: UUID, quantity: Int): Boolean = (items getOrElse (itemId, 0)) >= quantity
@@ -80,11 +80,11 @@ class Order private (
 					new Order(id = newId, description = description, version = sequence)
 				
 				case InventoryItemAddedToOrder(_, inventoryItemId, quantity, sequence) => 
-					new Order(id, description, shippingAddress, isPayed, isSubmitted, addItemsToOrder(inventoryItemId, quantity), sequence)
+					new Order(id, description, shippingAddress, isPayed, isSubmitted, getItemsAfterAdditionOf(inventoryItemId, quantity), sequence)
 
 				case InventoryItemRemovedFromOrder(_, inventoryItemId, quantity, sequence) => 
 					if(theItemCanBeRemoved(inventoryItemId, quantity))
-						new Order(id, description, shippingAddress, isPayed, isSubmitted, removeItemsFromOrder(inventoryItemId, quantity), sequence)
+						new Order(id, description, shippingAddress, isPayed, isSubmitted, getItemsAfterRemovalOf(inventoryItemId, quantity), sequence)
 					else 
 						this // TODO: Error, not enough items to remove
 
@@ -99,6 +99,6 @@ class Order private (
 					if(canBeSubmitted) new Order(id, description, shippingAddress, isPayed, true, items, sequence)
 					else this // TODO: Error, the order cannot be submitted
 				
-				case _ => this
+				case _ => this // TODO: log event ignored with event details
 			}
 }

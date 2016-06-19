@@ -67,6 +67,6 @@ class InventoryItem private (
 					if(itemsCanBeRemoved(count)) new InventoryItem(id, name, isActivated, countAfterRemoval(count), sequence)
 					else this // TODO: Error, not enough items to remove
 				
-				case _ => this
+				case _ => this // TODO: log event ignored with event details
 			}
 }
