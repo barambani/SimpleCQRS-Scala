@@ -25,7 +25,7 @@ object CommandHandlerSpec extends Specification {
 		def eventStoreRetriever(idContainer: Identified): List[Event] = history
 		def handleWithSideEffect = handle(eventStoreRetriever) _
 
-	  	"save an InventoryItemCreated event when receives the command CreateInventoryItem" in {
+	  	"return an InventoryItemCreated event when receives the command CreateInventoryItem" in {
 
 	  		val expectedName = "test-create-command"
 
@@ -41,7 +41,7 @@ object CommandHandlerSpec extends Specification {
 			}
 	  	}
 
-	  	"save an InventoryItemRenamed when receives the RenameInventoryItem command " in {
+	  	"return an InventoryItemRenamed when receives the RenameInventoryItem command " in {
 
 	  		val expectedName = "new item name"
 
@@ -53,7 +53,7 @@ object CommandHandlerSpec extends Specification {
 			}
 	  	}
 
-	  	"save an ItemsCheckedInToInventory when receives the CheckInItemsToInventory command" in {
+	  	"return an ItemsCheckedInToInventory when receives the CheckInItemsToInventory command" in {
 
 	  		val id = UUID.randomUUID
 	  		val expectedCheckedInCount = 4
@@ -66,7 +66,7 @@ object CommandHandlerSpec extends Specification {
 			}
 	  	}
 
-	  	"save an RemoveItemsFromInventory when receives the RemoveItemsFromInventory command" in {
+	  	"return an RemoveItemsFromInventory when receives the RemoveItemsFromInventory command" in {
 
 	  		val id = UUID.randomUUID
 	  		val expectedCheckedInCount = 3
@@ -75,6 +75,20 @@ object CommandHandlerSpec extends Specification {
   			
   			evolution.head match {
 				case ItemsRemovedFromInventory(eid,count,sequence) => count mustEqual expectedCheckedInCount
+				case _ => ko("The event saved into store is not correct")
+			}
+	  	}
+
+	  	"return an InventoryItemAddedToOrder when receives the AddInventoryItemToOrder command" in {
+
+	  		val id = UUID.randomUUID
+	  		val customerId = UUID.randomUUID
+	  		val expectedItemsOfId = 12
+
+  			lazy val evolution = handleWithSideEffect(AddInventoryItemToOrder(id, customerId, expectedItemsOfId))
+  			
+  			evolution.head match {
+				case InventoryItemAddedToOrder(id, inventoryItemId, quantity, sequence) => quantity mustEqual expectedItemsOfId
 				case _ => ko("The event saved into store is not correct")
 			}
 	  	}

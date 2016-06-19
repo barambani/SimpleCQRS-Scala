@@ -7,6 +7,7 @@ object CommandHandler {
 
 	import DomainTypes._
 	import InventoryItem._
+	import Order._
 	
 	def handle(retrieveHistory: Identified => List[Event])(command: Command): List[Event] =
 		applyCommand(command) map (f => (f compose retrieveHistory)(command)) getOrElse Nil
@@ -23,7 +24,12 @@ object CommandHandler {
 	}
 
 	private def ApplyCommandToOrder: PartialFunction[Command, List[Event] => List[Event]] = {
-		case CreateOrder(id, customerId, customerName) => Nil => OrderCreated(id, s"$customerId - $customerName", 1).asHistory
+		case CreateOrder(id, customerId, customerName) 					=> Nil => OrderCreated(id, s"$customerId - $customerName", 1).asHistory
+		case AddInventoryItemToOrder(_, inventoryItemId, quantity) 		=> nextEvolutionFor(addInventoryItemToOrder(inventoryItemId, quantity))	
+		case RemoveInventoryItemFromOrder(_, inventoryItemId, quantity)	=> nextEvolutionFor(removeInventoryItemFromOrder(inventoryItemId, quantity))
+		case AddShippingAddressToOrder(_, shippingAddress)				=> nextEvolutionFor(addShippingAddressToOrder(shippingAddress))
+		case PayForTheOrder(_) 											=> nextEvolutionFor(payTheBalance)
+		case SubmitTheOrder(_)											=> nextEvolutionFor(submit)
 	}
 
 	private def nextEvolutionFor[A: Aggregate](behavior: EvolvableState[A]): List[Event] => List[Event] = {

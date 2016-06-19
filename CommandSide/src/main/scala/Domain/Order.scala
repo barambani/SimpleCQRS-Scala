@@ -2,9 +2,46 @@ package SimpleCqrsScala.CommandSide.Domain
 
 import java.util.UUID
 import SimpleCqrsScala.CommandSide._
+import SimpleCqrsScala.CommandSide.Domain.DomainTypes._
 
 object Order {
-	def apply(history: List[Event]): Order = AggregateRoot.evolve(new Order, history)
+
+	import AggregateRoot._
+
+	def apply(history: List[Event]): Order = evolve(new Order, history)
+
+	//	Behavior
+	def addInventoryItemToOrder(inventoryItemId: UUID, quantity: Int): OrderS =
+		getNewState(ord => InventoryItemAddedToOrder(ord.id, inventoryItemId, quantity, ord.nextStateVersion).asHistory)
+
+	def removeInventoryItemFromOrder(inventoryItemId: UUID, quantity: Int): OrderS =
+		getNewState(
+			ord => 
+				if(ord.theItemCanBeRemoved(inventoryItemId, quantity))
+					InventoryItemRemovedFromOrder (
+						ord.id, 
+						inventoryItemId, 
+						quantity, 
+						ord.nextStateVersion
+					)
+					.asHistory
+				else Nil // TODO: Error, not enough items to remove
+		)
+
+	def addShippingAddressToOrder(shippingAddress: String): OrderS =
+		getNewState(ord => ShippingAddressAddedToOrder(ord.id, shippingAddress, ord.nextStateVersion).asHistory)
+
+	def payTheBalance: OrderS = 
+		getNewState(
+			ord => 	if(ord.canBePayed) OrderPayed(ord.id, ord.nextStateVersion).asHistory
+					else Nil // TODO: Error, cannot be payed twice
+		)
+
+	def submit: OrderS =
+		getNewState(
+			ord => 	if(ord.canBeSubmitted) OrderSubmitted(ord.id, ord.nextStateVersion).asHistory
+					else Nil // TODO: Error, the order cannot be submitted
+		)
 }
 
 class Order private (
@@ -16,11 +53,18 @@ class Order private (
 	val items: Map[UUID, Int] = Map.empty,
 	val version: Long = 0) extends Identity with Versioned {
 
-	private def addItemsToOrder(itemId: UUID, quantity: Int): Map[UUID, Int] = ???
-	private def removeItemsFromOrder(itemId: UUID, quantity: Int): Map[UUID, Int] = ???
+	private def addItemsToOrder(itemId: UUID, quantity: Int): Map[UUID, Int] =
+		if(items contains itemId) (items - itemId) + (itemId -> (items(itemId) + quantity))
+		else items + (itemId -> quantity)
+
+	private def removeItemsFromOrder(itemId: UUID, quantty: Int): Map[UUID, Int] =
+		items map (
+			i => if(i._1 == itemId) i._1 -> (i._2 - 1) 
+				 else i
+		)
 
 	//	Domain logic
-	private def theItemCanBeRemoved(itemId: UUID, quantity: Int): Boolean = items.getOrElse(itemId, 0) >= quantity
+	private def theItemCanBeRemoved(itemId: UUID, quantity: Int): Boolean = (items getOrElse (itemId, 0)) >= quantity
 	private def canBeChanged: Boolean = !isSubmitted
 	private def theShippingAddressIsValid: Boolean = !shippingAddress.isEmpty
 	private def canBePayed: Boolean = !isPayed
@@ -39,7 +83,10 @@ class Order private (
 					new Order(id, description, shippingAddress, isPayed, isSubmitted, addItemsToOrder(inventoryItemId, quantity), sequence)
 
 				case InventoryItemRemovedFromOrder(_, inventoryItemId, quantity, sequence) => 
-					new Order(id, description, shippingAddress, isPayed, isSubmitted, removeItemsFromOrder(inventoryItemId, quantity), sequence)
+					if(theItemCanBeRemoved(inventoryItemId, quantity))
+						new Order(id, description, shippingAddress, isPayed, isSubmitted, removeItemsFromOrder(inventoryItemId, quantity), sequence)
+					else 
+						this // TODO: Error, not enough items to remove
 
 				case ShippingAddressAddedToOrder(_, shippingAddress, sequence) => 
 					new Order(id, description, shippingAddress, isPayed, isSubmitted, items, sequence)
@@ -54,29 +101,4 @@ class Order private (
 				
 				case _ => this
 			}
-	
-	def addInventoryItemToOrder(inventoryItemId: UUID, quantity: Int): List[Event] =
-		InventoryItemAddedToOrder(id, inventoryItemId, quantity, nextStateVersion).asHistory
-
-	def removeInventoryItemFromOrder(inventoryItemId: UUID, quantity: Int): List[Event] =
-		if(theItemCanBeRemoved(inventoryItemId, quantity))
-			InventoryItemRemovedFromOrder (
-				id, 
-				inventoryItemId, 
-				quantity, 
-				nextStateVersion
-			)
-			.asHistory
-		else Nil // TODO: Error, not enough items to remove
-
-	def addShippingAddressToOrder(shippingAddress: String): List[Event] =
-		ShippingAddressAddedToOrder(id, shippingAddress, nextStateVersion).asHistory
-
-	def PayForTheOrder: List[Event] = 
-		if(canBePayed) OrderPayed(id, nextStateVersion).asHistory
-		else Nil // TODO: Error, cannot be payed twice
-
-	def submitTheOrder: List[Event] =
-		if(canBeSubmitted) OrderSubmitted(id, nextStateVersion).asHistory
-		else Nil // TODO: Error, the order cannot be submitted
 }

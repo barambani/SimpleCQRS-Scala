@@ -93,7 +93,7 @@ object InventoryItemSpec extends Specification {
 	  		lazy val item = InventoryItem(history)
 	  		lazy val states = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7))
 
-	  		lazy val newState = mergeStateSeq(states)
+	  		lazy val newState = foldStateSeq(states)
 
 			newState.eval(item).head.sequence mustEqual 5
 	  	}
@@ -109,7 +109,7 @@ object InventoryItemSpec extends Specification {
 	  		lazy val item = InventoryItem(history)
 	  		lazy val states = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7), checkInItemsToInventory(3))
 			
-			lazy val newState = mergeStateSeq(states)
+			lazy val newState = foldStateSeq(states)
 
 	  		newState.exec(item).itemsCount mustEqual 14
 	  		newState.exec(item).version mustEqual 6

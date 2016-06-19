@@ -45,6 +45,6 @@ object AggregateRoot {
 
 	def getNewState[A : Aggregate](esg: A => List[Event]): EvolvableState[A] = for {
 		es 	<- State.gets(esg)
-		_ 	<- State.modify { s: A => AggregateRoot.evolve(s, es) }
+		_ 	<- State.modify { s: A => evolve(s, es) }
 	} yield es
 }
