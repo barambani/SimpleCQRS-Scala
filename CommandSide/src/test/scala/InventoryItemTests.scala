@@ -82,7 +82,41 @@ object InventoryItemSpec extends Specification {
 			finalState.itemsCount mustEqual 6
 	  	}
 
-	  	"generates the correct events after commands application" in {
+	  	"generate the correct events after one command application" in {
+
+  			val history = List(
+  				ItemsCheckedInToInventory(id, 10, 3),
+  				ItemsCheckedInToInventory(id, 10, 2),
+	  			InventoryItemCreated(id, "Test Inventory Item", 1)
+  			)
+	  		
+	  		lazy val item = InventoryItem(history)
+
+	  		execState(removeItemsFromInventory(2))(item).itemsCount mustEqual 18
+	  		execState(removeItemsFromInventory(2))(item).version mustEqual 4
+	  	}
+
+	  	"have the correct state after one command application" in {
+
+  			val history = List(
+  				ItemsCheckedInToInventory(id, 10, 3),
+  				ItemsCheckedInToInventory(id, 10, 2),
+	  			InventoryItemCreated(id, "Test Inventory Item", 1)
+  			)
+	  		
+	  		lazy val item = InventoryItem(history)
+
+	  		evalState(removeItemsFromInventory(7))(item) match {
+	  			case ItemsRemovedFromInventory(i, c, s) :: Nil => {
+					i mustEqual id
+					c mustEqual 7
+					s mustEqual 4
+				}
+				case _ => ko("The generated event is not of the correct type")
+	  		}
+	  	}
+
+	  	"generate the correct events after commands application" in {
 
   			val history = List(
   				ItemsCheckedInToInventory(id, 10, 3),
@@ -93,12 +127,12 @@ object InventoryItemSpec extends Specification {
 	  		lazy val item = InventoryItem(history)
 	  		lazy val states = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7))
 
-	  		lazy val newState = foldStateSeq(states)
+	  		lazy val newState = mergeStateTransitions(states)
 
-			newState.eval(item).head.sequence mustEqual 5
+			evalState(newState)(item).head.sequence mustEqual 5
 	  	}
 
-	  	"has the correct state after commands application" in {
+	  	"have the correct state after commands application" in {
 
   			val history = List(
   				ItemsCheckedInToInventory(id, 10, 3),
@@ -109,10 +143,10 @@ object InventoryItemSpec extends Specification {
 	  		lazy val item = InventoryItem(history)
 	  		lazy val states = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7), checkInItemsToInventory(3))
 			
-			lazy val newState = foldStateSeq(states)
+			lazy val newState: EvolvableState[InventoryItem] = mergeStateTransitions(states)
 
-	  		newState.exec(item).itemsCount mustEqual 14
-	  		newState.exec(item).version mustEqual 6
+	  		execState(newState)(item).itemsCount mustEqual 14
+	  		execState(newState)(item).version mustEqual 6
 	  	}
 	}
 }

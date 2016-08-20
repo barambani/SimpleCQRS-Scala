@@ -13,7 +13,7 @@ object DomainStates {
 
 	def zeroEvolvableState[A] = State.state[A, List[Event]](Nil)
 	
-	def foldStateSeq[A](states: Seq[EvolvableState[A]]): EvolvableState[A] = {
+	def mergeStateTransitions[A](states: Seq[EvolvableState[A]]): EvolvableState[A] = {
 
 		def mergeStates[A](fs: EvolvableState[A], ps: EvolvableState[A]): EvolvableState[A] = State { 
 			(s: A) => {
@@ -25,4 +25,10 @@ object DomainStates {
 
 		(states foldRight zeroEvolvableState[A]) ((fs,ps) => mergeStates(fs, ps))
 	}
+
+	lazy val execState: EvolvableState[InventoryItem] => InventoryItem => InventoryItem =
+		st => i => st.exec(i)
+
+	lazy val evalState: EvolvableState[InventoryItem] => InventoryItem => List[Event] = 
+		st => i => st.eval(i)
 }
