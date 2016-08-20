@@ -15,34 +15,30 @@ object Order {
 	def addInventoryItemToOrder(inventoryItemId: UUID, quantity: Int): OrderS =
 		getNewState(ord => InventoryItemAddedToOrder(ord.id, inventoryItemId, quantity, ord.nextStateVersion).asHistory)
 
-	def removeInventoryItemFromOrder(inventoryItemId: UUID, quantity: Int): OrderS =
-		getNewState(
-			ord => 
-				if(canRemoveTheItem(ord.items, inventoryItemId, quantity))
-					InventoryItemRemovedFromOrder (
-						ord.id, 
-						inventoryItemId, 
-						quantity, 
-						ord.nextStateVersion
-					)
-					.asHistory
-				else Nil // TODO: Error, not enough items to remove
-		)
+	def removeInventoryItemFromOrder(inventoryItemId: UUID, quantity: Int): OrderS = getNewState(
+		ord => 
+			if(canRemoveTheItem(ord.items, inventoryItemId, quantity))
+				InventoryItemRemovedFromOrder (
+					ord.id, 
+					inventoryItemId, 
+					quantity, 
+					ord.nextStateVersion
+				).asHistory
+			else Nil // TODO: Error, not enough items to remove
+	)
 
 	def addShippingAddressToOrder(shippingAddress: String): OrderS =
 		getNewState(ord => ShippingAddressAddedToOrder(ord.id, shippingAddress, ord.nextStateVersion).asHistory)
 
-	def payTheBalance: OrderS = 
-		getNewState(
-			ord => 	if(ord.canBePayed) OrderPayed(ord.id, ord.nextStateVersion).asHistory
-					else Nil // TODO: Error, cannot be payed twice
-		)
+	def payTheBalance: OrderS = getNewState(
+		ord => 	if(ord.canBePayed) OrderPayed(ord.id, ord.nextStateVersion).asHistory
+				else Nil // TODO: Error, cannot be payed twice
+	)
 
-	def submit: OrderS =
-		getNewState(
-			ord => 	if(ord.canBeSubmitted) OrderSubmitted(ord.id, ord.nextStateVersion).asHistory
-					else Nil // TODO: Error, the order cannot be submitted
-		)
+	def submit: OrderS = getNewState(
+		ord => 	if(ord.canBeSubmitted) OrderSubmitted(ord.id, ord.nextStateVersion).asHistory
+				else Nil // TODO: Error, the order cannot be submitted
+	)
 }
 
 class Order private (
@@ -51,7 +47,7 @@ class Order private (
 	val shippingAddress: String = "",
 	val isPayed: Boolean = false,
 	val isSubmitted: Boolean = false,
-	val items: OrderItems = Map.empty,
+	val items: OrderItems = OrderItems.empty,
 	val version: Long = 0) extends Identity with Versioned {
 
 	//	Domain logic

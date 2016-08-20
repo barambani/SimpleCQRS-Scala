@@ -10,6 +10,8 @@ object OrderItems {
 
 	type OrderItems = Map[UUID, Int]
 
+	lazy val empty: Map[UUID, Int] = Map.empty
+
 	def canRemoveTheItem(oi: OrderItems, itemId: UUID, quantity: Int): Boolean = (oi getOrElse (itemId, 0)) >= quantity
 
 	def addToItems(oi: OrderItems, itemId: UUID, quantity: Int): OrderItems =
