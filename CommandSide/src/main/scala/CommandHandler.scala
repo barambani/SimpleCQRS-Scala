@@ -6,8 +6,8 @@ import SimpleCqrsScala.CommandSide.Domain._
 object CommandHandler {
 
 	import DomainStates._
-	import InventoryItem._
-	import Order._
+	import InventoryItemOps._
+	import OrderOps._
 	
 	def handle(retrieveHistory: Identified => List[Event])(command: Command): List[Event] =
 		applyCommand(command) map (f => (f compose retrieveHistory)(command)) getOrElse Nil

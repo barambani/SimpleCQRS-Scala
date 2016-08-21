@@ -10,7 +10,7 @@ import java.util.UUID
 
 object InventoryItemSpec extends Specification {
 
-	import InventoryItem._
+	import InventoryItemOps._
 	import AggregateRoot._
 	import DomainStates._
 

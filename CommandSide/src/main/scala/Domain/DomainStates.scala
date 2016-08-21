@@ -6,6 +6,9 @@ import scalaz._
 
 object DomainStates {
 
+	import InventoryItemOps._
+	import OrderOps._
+
 	type EvolvableState[A] = State[A, List[Event]]
 
 	type InventoryItemS = EvolvableState[InventoryItem]

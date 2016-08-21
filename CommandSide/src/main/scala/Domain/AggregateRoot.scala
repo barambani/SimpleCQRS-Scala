@@ -7,29 +7,28 @@ import scalaz._
 
 trait Versioned {
 	val version: Long
-	protected def nextStateVersion: Long = version + 1
-	protected def isInSequence(event: Sequenced): Boolean = event.sequence == nextStateVersion
 }
 
 trait Identity {
 	val id: UUID
-	protected def hasTheCorrectId(event: Identified): Boolean = id == new UUID(0, 0) || event.id == id
 }
 
 trait Aggregate[A] {
 	def apply(history: List[Event]): A
 	def getNewStateFor(currentState: A, event: Event): A
 }
-
 object Aggregate {
+
+	import InventoryItemOps._
+	import OrderOps._
 	
-	implicit lazy val inventoryItemAggregate = new Aggregate[InventoryItem] { 
-		def getNewStateFor(currentState: InventoryItem, event: Event): InventoryItem = currentState getNewStateWhen event
+	implicit lazy val inventoryItemAggregate = new Aggregate[InventoryItem] {
+		def getNewStateFor(currentState: InventoryItem, event: Event): InventoryItem = InventoryItemOps.eventReceivedAtState(event)(currentState)
 		def apply(history: List[Event]): InventoryItem = InventoryItem(history)
 	}
 
 	implicit lazy val orderAggregate = new Aggregate[Order] { 
-		def getNewStateFor(currentState: Order, event: Event): Order = currentState getNewStateWhen event
+		def getNewStateFor(currentState: Order, event: Event): Order = OrderOps.eventReceivedAtState(event)(currentState)
 		def apply(history: List[Event]): Order = Order(history)
 	}
 }
@@ -37,7 +36,7 @@ object Aggregate {
 object AggregateRoot {
 
 	import DomainStates._
-	
+
 	def evolve[A : Aggregate](aState: A, history: List[Event]): A = 
 		(history foldRight aState) ((e, s) => implicitly[Aggregate[A]].getNewStateFor(s, e))
 

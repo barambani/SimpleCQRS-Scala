@@ -6,67 +6,84 @@ import SimpleCqrsScala.CommandSide.Domain.DomainStates._
 
 import scalaz._
 
-object InventoryItem {
+object InventoryItemOps {
 
 	import AggregateRoot._
-
-	def apply(history: List[Event]): InventoryItem = evolve(new InventoryItem, history)
+	import EventOps._
 
 	//	Behavior
 	def deactivateInventoryItem: InventoryItemS = 
-		getNewState(i => InventoryItemDeactivated(i.id, i.nextStateVersion).asHistory)
+		getNewState(i => InventoryItemDeactivated(i.id, nextStateVersion(i)).asHistory)
 
 	def checkInItemsToInventory(count: Int): InventoryItemS =
-		getNewState(i => ItemsCheckedInToInventory(i.id, count, i.nextStateVersion).asHistory)
+		getNewState(i => ItemsCheckedInToInventory(i.id, count, nextStateVersion(i)).asHistory)
 
 	def renameInventoryItem(newName: String): InventoryItemS = getNewState(
-		i => if(i.theNameIsValid(newName)) InventoryItemRenamed(i.id, newName, i.nextStateVersion).asHistory 
+		i => if(i.theNameIsValid(newName)) InventoryItemRenamed(i.id, newName, nextStateVersion(i)).asHistory 
 			else Nil // TODO: Error, the new name is not valid
 	)
 	
 	def removeItemsFromInventory(count: Int): InventoryItemS = getNewState(
-		i => if(i.itemsCanBeRemoved(count)) ItemsRemovedFromInventory(i.id, count, i.nextStateVersion).asHistory
+		i => if(i.itemsCanBeRemoved(count)) ItemsRemovedFromInventory(i.id, count, nextStateVersion(i)).asHistory
 			else Nil // TODO: Error, not enough items to remove
 	)
-}
 
-class InventoryItem private (
-	val id: UUID = new UUID(0, 0), 
-	val name: String = "", 
-	val isActivated: Boolean = false,
-	val itemsCount: Int = 0,
-	val version: Long = 0) extends Identity with Versioned {
-	
-	private def countAfterCheckIn(toCheckin: Int): Int = itemsCount + toCheckin
-	private def countAfterRemoval(toRemove: Int): Int = itemsCount - toRemove
+	lazy val eventReceivedAtState: Event => InventoryItem => InventoryItem = 
+		event => aggregate => 
+			if(!hasACorrectIdCheck(event)(aggregate)) aggregate // TODO: Error in this case
+			else if(!isInSequenceCheck(event)(aggregate)) aggregate // TODO: Error in this case
+			else 
+				event match {
+					case InventoryItemCreated(newId, newName, sequence) => 
+						if(aggregate.theNameIsValid(newName)) new InventoryItem(newId, newName, true, version = sequence)
+						else aggregate // TODO: Error, the new name is not valid
+					
+					case InventoryItemDeactivated(_, sequence) => 
+						new InventoryItem(aggregate.id, aggregate.name, false, aggregate.itemsCount, sequence)
 
-	//	Domain logic
-	private def itemsCanBeRemoved(count: Int): Boolean = itemsCount >= count
-	private def theNameIsValid(n: String): Boolean = !n.isEmpty
+					case InventoryItemRenamed(_, newName, sequence) => 
+						if(aggregate.theNameIsValid(newName)) new InventoryItem(
+							aggregate.id, 
+							newName, 
+							aggregate.isActivated, 
+							aggregate.itemsCount, 
+							sequence
+						)
+						else aggregate // TODO: Error, the new name is not valid
 
-	def getNewStateWhen(event: Event): InventoryItem = 
-		if(!hasTheCorrectId(event)) this // TODO: Error in this case
-		else if(!isInSequence(event)) this // TODO: Error in this case
-		else 
-			event match {
-				case InventoryItemCreated(newId, newName, sequence) => 
-					if(theNameIsValid(newName)) new InventoryItem(newId, newName, true, version = sequence)
-					else this // TODO: Error, the new name is not valid
-				
-				case InventoryItemDeactivated(_, sequence) => 
-					new InventoryItem(id, name, false, itemsCount, sequence)
+					case ItemsCheckedInToInventory(_, count, sequence) => 
+						new InventoryItem(aggregate.id, aggregate.name, aggregate.isActivated, aggregate.countAfterCheckIn(count), sequence)
+					
+					case ItemsRemovedFromInventory(_, count, sequence) => 
+						if(aggregate.itemsCanBeRemoved(count)) new InventoryItem(
+							aggregate.id, 
+							aggregate.name, 
+							aggregate.isActivated, 
+							aggregate.countAfterRemoval(count), 
+							sequence
+						)
+						else aggregate // TODO: Error, not enough items to remove
+					
+					case _ => aggregate // TODO: log event ignored with event details
+				}
 
-				case InventoryItemRenamed(_, newName, sequence) => 
-					if(theNameIsValid(newName)) new InventoryItem(id, newName, isActivated, itemsCount, sequence)
-					else this // TODO: Error, the new name is not valid
 
-				case ItemsCheckedInToInventory(_, count, sequence) => 
-					new InventoryItem(id, name, isActivated, countAfterCheckIn(count), sequence)
-				
-				case ItemsRemovedFromInventory(_, count, sequence) => 
-					if(itemsCanBeRemoved(count)) new InventoryItem(id, name, isActivated, countAfterRemoval(count), sequence)
-					else this // TODO: Error, not enough items to remove
-				
-				case _ => this // TODO: log event ignored with event details
-			}
+	object InventoryItem {
+		import AggregateRoot._
+
+		def apply(history: List[Event]): InventoryItem = evolve(new InventoryItem, history)
+	}
+	class InventoryItem private[InventoryItemOps] (
+		val id: UUID = new UUID(0, 0), 
+		val name: String = "", 
+		val isActivated: Boolean = false,
+		val itemsCount: Int = 0,
+		val version: Long = 0) extends Identity with Versioned {
+		
+		//	Domain logic
+		lazy val countAfterCheckIn: Int => Int = toCheckin => itemsCount + toCheckin
+		lazy val countAfterRemoval: Int => Int = toRemove => itemsCount - toRemove
+		lazy val itemsCanBeRemoved: Int => Boolean = count => itemsCount >= count
+		lazy val theNameIsValid: String => Boolean = n => !n.isEmpty
+	}
 }

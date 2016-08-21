@@ -4,13 +4,11 @@ import org.specs2.mutable._
 import SimpleCqrsScala.CommandSide._
 import SimpleCqrsScala.CommandSide.Domain._
 
-import scalaz._
-import Scalaz._
-
 import java.util.UUID
 
 object OrderSpec extends Specification {
 
+	import OrderOps._
 	import AggregateRoot._
 	import DomainStates._
 
@@ -32,11 +30,11 @@ object OrderSpec extends Specification {
 	  			OrderCreated(orderId, "Test Order", 1)
   			)
 	  		
-	  		val finalState = Domain.Order(history)
+	  		val finalState = Order(history)
 
-			finalState.items get inventoryItemId1 mustEqual 7.some
-			finalState.items get inventoryItemId2 mustEqual 3.some
-			finalState.items get inventoryItemId3 mustEqual 3.some
+			finalState.items get inventoryItemId1 mustEqual Some(7)
+			finalState.items get inventoryItemId2 mustEqual Some(3)
+			finalState.items get inventoryItemId3 mustEqual Some(3)
 	  	}
 
 	  	"have the correct number of items after a serie of removals" in {
@@ -53,11 +51,11 @@ object OrderSpec extends Specification {
 	  			OrderCreated(orderId, "Test Order", 1)
   			)
 	  		
-	  		val finalState = Domain.Order(history)
+	  		val finalState = Order(history)
 
-			finalState.items get inventoryItemId1 mustEqual 6.some
-			finalState.items get inventoryItemId2 mustEqual 5.some
-			finalState.items get inventoryItemId3 mustEqual 4.some
+			finalState.items get inventoryItemId1 mustEqual Some(6)
+			finalState.items get inventoryItemId2 mustEqual Some(5)
+			finalState.items get inventoryItemId3 mustEqual Some(4)
 	  	}
 
 	  	"have the correct number of items after a serie of additions and removals" in {
@@ -74,11 +72,11 @@ object OrderSpec extends Specification {
 	  			OrderCreated(orderId, "Test Order", 1)
   			)
 	  		
-	  		val finalState = Domain.Order(history)
+	  		val finalState = Order(history)
 
-			finalState.items get inventoryItemId1 mustEqual 5.some
-			finalState.items get inventoryItemId2 mustEqual 2.some
-			finalState.items get inventoryItemId3 mustEqual 2.some
+			finalState.items get inventoryItemId1 mustEqual Some(5)
+			finalState.items get inventoryItemId2 mustEqual Some(2)
+			finalState.items get inventoryItemId3 mustEqual Some(2)
 	  	}
 	}
 }
