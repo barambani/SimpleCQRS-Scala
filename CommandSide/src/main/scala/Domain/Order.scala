@@ -11,33 +11,36 @@ object OrderOps {
 	import EventOps._
 
 	//	Behavior
-	def addInventoryItemToOrder(inventoryItemId: UUID, quantity: Int): OrderS =
-		getNewState(ord => InventoryItemAddedToOrder(ord.id, inventoryItemId, quantity, nextStateVersion(ord)).asHistory)
+	def addInventoryItemToOrder(inventoryItemId: UUID, quantity: Int): StateTransition[Order] =
+		newStateTransition(ord => InventoryItemAddedToOrder(ord.id, inventoryItemId, quantity, nextStateVersion(ord)).asHistory)
 
-	def removeInventoryItemFromOrder(inventoryItemId: UUID, quantity: Int): OrderS = getNewState(
-		ord => 
-			if(canRemoveTheItem(ord.items, inventoryItemId, quantity))
-				InventoryItemRemovedFromOrder (
-					ord.id, 
-					inventoryItemId, 
-					quantity, 
-					nextStateVersion(ord)
-				).asHistory
-			else Nil // TODO: Error, not enough items to remove
-	)
+	def removeInventoryItemFromOrder(inventoryItemId: UUID, quantity: Int): StateTransition[Order] = 
+		newStateTransition(
+			ord => 
+				if(canRemoveTheItem(ord.items, inventoryItemId, quantity))
+					InventoryItemRemovedFromOrder (
+						ord.id, 
+						inventoryItemId, 
+						quantity, 
+						nextStateVersion(ord)
+					).asHistory
+				else Nil // TODO: Error, not enough items to remove
+		)
 
-	def addShippingAddressToOrder(shippingAddress: String): OrderS =
-		getNewState(ord => ShippingAddressAddedToOrder(ord.id, shippingAddress, nextStateVersion(ord)).asHistory)
+	def addShippingAddressToOrder(shippingAddress: String): StateTransition[Order] =
+		newStateTransition(ord => ShippingAddressAddedToOrder(ord.id, shippingAddress, nextStateVersion(ord)).asHistory)
 
-	def payTheBalance: OrderS = getNewState(
-		ord => 	if(ord.canBePayed) OrderPayed(ord.id, nextStateVersion(ord)).asHistory
-				else Nil // TODO: Error, cannot be payed twice
-	)
+	def payTheBalance: StateTransition[Order] = 
+		newStateTransition(
+			ord => 	if(ord.canBePayed) OrderPayed(ord.id, nextStateVersion(ord)).asHistory
+					else Nil // TODO: Error, cannot be payed twice
+		)
 
-	def submit: OrderS = getNewState(
-		ord => 	if(ord.canBeSubmitted) OrderSubmitted(ord.id, nextStateVersion(ord)).asHistory
-				else Nil // TODO: Error, the order cannot be submitted
-	)
+	def submit: StateTransition[Order] = 
+		newStateTransition(
+			ord => 	if(ord.canBeSubmitted) OrderSubmitted(ord.id, nextStateVersion(ord)).asHistory
+					else Nil // TODO: Error, the order cannot be submitted
+		)
 
 	lazy val newState: Order => Event => Order = 
 		aggregate => event =>

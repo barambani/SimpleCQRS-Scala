@@ -12,21 +12,23 @@ object InventoryItemOps {
 	import EventOps._
 
 	//	Behavior
-	def deactivateInventoryItem: InventoryItemS = 
-		getNewState(i => InventoryItemDeactivated(i.id, nextStateVersion(i)).asHistory)
+	def deactivateInventoryItem: StateTransition[InventoryItem] = 
+		newStateTransition(i => InventoryItemDeactivated(i.id, nextStateVersion(i)).asHistory)
 
-	def checkInItemsToInventory(count: Int): InventoryItemS =
-		getNewState(i => ItemsCheckedInToInventory(i.id, count, nextStateVersion(i)).asHistory)
+	def checkInItemsToInventory(count: Int): StateTransition[InventoryItem] =
+		newStateTransition(i => ItemsCheckedInToInventory(i.id, count, nextStateVersion(i)).asHistory)
 
-	def renameInventoryItem(newName: String): InventoryItemS = getNewState(
-		i => if(i.theNameIsValid(newName)) InventoryItemRenamed(i.id, newName, nextStateVersion(i)).asHistory 
-			else Nil // TODO: Error, the new name is not valid
-	)
+	def renameInventoryItem(newName: String): StateTransition[InventoryItem] = 
+		newStateTransition(
+			i => if(i.theNameIsValid(newName)) InventoryItemRenamed(i.id, newName, nextStateVersion(i)).asHistory 
+				 else Nil // TODO: Error, the new name is not valid
+		)
 	
-	def removeItemsFromInventory(count: Int): InventoryItemS = getNewState(
-		i => if(i.itemsCanBeRemoved(count)) ItemsRemovedFromInventory(i.id, count, nextStateVersion(i)).asHistory
-			else Nil // TODO: Error, not enough items to remove
-	)
+	def removeItemsFromInventory(count: Int): StateTransition[InventoryItem] = 
+		newStateTransition(
+			i => if(i.itemsCanBeRemoved(count)) ItemsRemovedFromInventory(i.id, count, nextStateVersion(i)).asHistory
+				 else Nil // TODO: Error, not enough items to remove
+		)
 
 	lazy val newState: InventoryItem => Event => InventoryItem = 
 		aggregate => event =>
@@ -66,7 +68,6 @@ object InventoryItemOps {
 					
 					case _ => aggregate // TODO: log event ignored with event details
 				}
-
 
 	object InventoryItem {
 		import AggregateRoot._

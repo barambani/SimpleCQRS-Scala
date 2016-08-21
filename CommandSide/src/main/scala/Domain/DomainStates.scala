@@ -6,19 +6,13 @@ import scalaz._
 
 object DomainStates {
 
-	import InventoryItemOps._
-	import OrderOps._
+	type StateTransition[A] = State[A, List[Event]]
 
-	type EvolvableState[A] = State[A, List[Event]]
-
-	type InventoryItemS = EvolvableState[InventoryItem]
-	type OrderS = EvolvableState[Order]
-
-	def zeroEvolvableState[A] = State.state[A, List[Event]](Nil)
+	def unitTransition[A] = State.state[A, List[Event]](Nil)
 	
-	def mergeStateTransitions[A](states: Seq[EvolvableState[A]]): EvolvableState[A] = {
+	def mergeStateTransitions[A](states: Seq[StateTransition[A]]): StateTransition[A] = {
 
-		def mergeStates[A](fs: EvolvableState[A], ps: EvolvableState[A]): EvolvableState[A] = State { 
+		def mergeStates[A](fs: StateTransition[A], ps: StateTransition[A]): StateTransition[A] = State { 
 			(s: A) => {
 				lazy val (psS, psT) = ps.run(s)
 				lazy val (fsS, fsT) = fs.run(psS)
@@ -26,12 +20,9 @@ object DomainStates {
 			}
 		}
 
-		(states foldRight zeroEvolvableState[A]) ((fs,ps) => mergeStates(fs, ps))
+		(states foldRight unitTransition[A]) ((fs,ps) => mergeStates(fs, ps))
 	}
 
-	lazy val execState: EvolvableState[InventoryItem] => InventoryItem => InventoryItem =
-		st => i => st.exec(i)
-
-	lazy val evalState: EvolvableState[InventoryItem] => InventoryItem => List[Event] = 
-		st => i => st.eval(i)
+	def execState[A]: StateTransition[A] => A => A = st => i => st.exec(i)
+	def evalState[A]: StateTransition[A] => A => List[Event] = st => i => st.eval(i)
 }

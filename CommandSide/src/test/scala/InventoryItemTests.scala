@@ -143,7 +143,7 @@ object InventoryItemSpec extends Specification {
 	  		lazy val item = InventoryItem(history)
 	  		lazy val states = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7), checkInItemsToInventory(3))
 			
-			lazy val newState: EvolvableState[InventoryItem] = mergeStateTransitions(states)
+			lazy val newState: StateTransition[InventoryItem] = mergeStateTransitions(states)
 
 	  		execState(newState)(item).itemsCount mustEqual 14
 	  		execState(newState)(item).version mustEqual 6

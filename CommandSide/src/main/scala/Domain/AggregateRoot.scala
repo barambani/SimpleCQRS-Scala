@@ -44,8 +44,8 @@ object AggregateRoot {
 
 	def createFrom[A: Aggregate](history: List[Event]): A = implicitly[Aggregate[A]].apply(history)
 
-	def getNewState[A : Aggregate](esg: A => List[Event]): EvolvableState[A] = for {
-		es 	<- State.gets(esg)
+	def newStateTransition[A : Aggregate](stateGenerator: A => List[Event]): StateTransition[A] = for {
+		es 	<- State.gets(stateGenerator)
 		_ 	<- State.modify { s: A => evolve(s, es) }
 	} yield es
 }

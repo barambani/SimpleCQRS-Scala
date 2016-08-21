@@ -32,7 +32,7 @@ object CommandHandler {
 		case SubmitTheOrder(_)											=> nextEvolutionFor(submit)
 	}
 
-	private def nextEvolutionFor[A: Aggregate](behavior: EvolvableState[A]): List[Event] => List[Event] = {
+	private def nextEvolutionFor[A: Aggregate](behavior: StateTransition[A]): List[Event] => List[Event] = {
 		behavior.eval _ compose AggregateRoot.createFrom[A] _
 	}
 }
