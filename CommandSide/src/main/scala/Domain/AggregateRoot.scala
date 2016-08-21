@@ -14,8 +14,8 @@ trait Identity {
 }
 
 trait Aggregate[A] {
-	def apply(history: List[Event]): A
-	def getNewStateFor(currentState: A, event: Event): A
+	val apply: List[Event] => A
+	val newState: A => Event => A
 }
 object Aggregate {
 
@@ -23,13 +23,13 @@ object Aggregate {
 	import OrderOps._
 	
 	implicit lazy val inventoryItemAggregate = new Aggregate[InventoryItem] {
-		def getNewStateFor(currentState: InventoryItem, event: Event): InventoryItem = InventoryItemOps.eventReceivedAtState(event)(currentState)
-		def apply(history: List[Event]): InventoryItem = InventoryItem(history)
+		lazy val newState: InventoryItem => Event => InventoryItem = InventoryItemOps.newState
+		lazy val apply: List[Event] => InventoryItem = InventoryItem.apply
 	}
 
-	implicit lazy val orderAggregate = new Aggregate[Order] { 
-		def getNewStateFor(currentState: Order, event: Event): Order = OrderOps.eventReceivedAtState(event)(currentState)
-		def apply(history: List[Event]): Order = Order(history)
+	implicit lazy val orderAggregate = new Aggregate[Order] {
+		lazy val newState: Order => Event => Order = OrderOps.newState
+		lazy val apply: List[Event] => Order = Order.apply
 	}
 }
 
@@ -38,7 +38,9 @@ object AggregateRoot {
 	import DomainStates._
 
 	def evolve[A : Aggregate](aState: A, history: List[Event]): A = 
-		(history foldRight aState) ((e, s) => implicitly[Aggregate[A]].getNewStateFor(s, e))
+		(history foldRight aState) {
+			(e, s) => implicitly[Aggregate[A]].newState(s)(e)
+		}
 
 	def createFrom[A: Aggregate](history: List[Event]): A = implicitly[Aggregate[A]].apply(history)
 

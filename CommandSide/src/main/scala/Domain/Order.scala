@@ -39,8 +39,8 @@ object OrderOps {
 				else Nil // TODO: Error, the order cannot be submitted
 	)
 
-	lazy val eventReceivedAtState: Event => Order => Order =
-		event => aggregate =>
+	lazy val newState: Order => Event => Order = 
+		aggregate => event =>
 			if(!aggregate.canBeChanged) aggregate // TODO: Error, no changes are permitted after submission
 			else if(!hasACorrectIdCheck(event)(aggregate)) aggregate // TODO: Error in this case
 			else if(!isInSequenceCheck(event)(aggregate)) aggregate // TODO: Error in this case

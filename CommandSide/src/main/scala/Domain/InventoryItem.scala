@@ -28,8 +28,8 @@ object InventoryItemOps {
 			else Nil // TODO: Error, not enough items to remove
 	)
 
-	lazy val eventReceivedAtState: Event => InventoryItem => InventoryItem = 
-		event => aggregate => 
+	lazy val newState: InventoryItem => Event => InventoryItem = 
+		aggregate => event =>
 			if(!hasACorrectIdCheck(event)(aggregate)) aggregate // TODO: Error in this case
 			else if(!isInSequenceCheck(event)(aggregate)) aggregate // TODO: Error in this case
 			else 
