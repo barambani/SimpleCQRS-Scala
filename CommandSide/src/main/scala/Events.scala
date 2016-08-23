@@ -22,9 +22,7 @@ sealed trait Sequenced {
 	val sequence: Long
 }
 
-sealed trait Event extends Sequenced with Identified with Product with Serializable {
-	def asHistory: List[Event] = List(this)
-}
+sealed trait Event extends Sequenced with Identified with Product with Serializable
 
 //	Order
 final case class OrderCreated(id: UUID, description: String, sequence: Long) extends Event

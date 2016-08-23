@@ -12,7 +12,7 @@ object OrderOps {
 
 	//	Behavior
 	def addInventoryItemToOrder(inventoryItemId: UUID, quantity: Int): StateTransition[Order] =
-		newStateTransition(ord => InventoryItemAddedToOrder(ord.id, inventoryItemId, quantity, nextStateVersion(ord)).asHistory)
+		newStateTransition(ord => InventoryItemAddedToOrder(ord.id, inventoryItemId, quantity, nextStateVersion(ord)) :: Nil)
 
 	def removeInventoryItemFromOrder(inventoryItemId: UUID, quantity: Int): StateTransition[Order] = 
 		newStateTransition(
@@ -23,22 +23,22 @@ object OrderOps {
 						inventoryItemId, 
 						quantity, 
 						nextStateVersion(ord)
-					).asHistory
+					) :: Nil
 				else Nil // TODO: Error, not enough items to remove
 		)
 
 	def addShippingAddressToOrder(shippingAddress: String): StateTransition[Order] =
-		newStateTransition(ord => ShippingAddressAddedToOrder(ord.id, shippingAddress, nextStateVersion(ord)).asHistory)
+		newStateTransition(ord => ShippingAddressAddedToOrder(ord.id, shippingAddress, nextStateVersion(ord)) :: Nil)
 
 	def payTheBalance: StateTransition[Order] = 
 		newStateTransition(
-			ord => 	if(ord.canBePayed) OrderPayed(ord.id, nextStateVersion(ord)).asHistory
+			ord => 	if(ord.canBePayed) OrderPayed(ord.id, nextStateVersion(ord)) :: Nil
 					else Nil // TODO: Error, cannot be payed twice
 		)
 
 	def submit: StateTransition[Order] = 
 		newStateTransition(
-			ord => 	if(ord.canBeSubmitted) OrderSubmitted(ord.id, nextStateVersion(ord)).asHistory
+			ord => 	if(ord.canBeSubmitted) OrderSubmitted(ord.id, nextStateVersion(ord)) :: Nil
 					else Nil // TODO: Error, the order cannot be submitted
 		)
 
@@ -117,6 +117,7 @@ object OrderOps {
 	object Order {
 		import AggregateRoot._
 		
+		def apply(history: Event*): Order = apply(history.toList)
 		def apply(history: List[Event]): Order = evolve(new Order, history)
 	}
 	case class Order private[OrderOps] (

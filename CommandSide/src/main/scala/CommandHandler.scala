@@ -15,7 +15,7 @@ object CommandHandler {
 
 	import InventoryItemOps._
 	private def ApplyCommandToInventoryItem: PartialFunction[Command, List[Event] => List[Event]] = {
-		case CreateInventoryItem(id, name) 		=> Nil => InventoryItemCreated(id, name, 1).asHistory
+		case CreateInventoryItem(id, name) 		=> Nil => InventoryItemCreated(id, name, 1) :: Nil
 		case DeactivateInventoryItem(_) 		=> eventEmissionForTransition(deactivateInventoryItem)
 		case RenameInventoryItem(_, newName) 	=> eventEmissionForTransition(renameInventoryItem(newName))
 		case CheckInItemsToInventory(_, count)	=> eventEmissionForTransition(checkInItemsToInventory(count))
@@ -24,7 +24,7 @@ object CommandHandler {
 
 	import OrderOps._
 	private def ApplyCommandToOrder: PartialFunction[Command, List[Event] => List[Event]] = {
-		case CreateOrder(id, customerId, customerName) 					=> Nil => OrderCreated(id, s"$customerId - $customerName", 1).asHistory
+		case CreateOrder(id, customerId, customerName) 					=> Nil => OrderCreated(id, s"$customerId - $customerName", 1) :: Nil
 		case AddInventoryItemToOrder(_, inventoryItemId, quantity) 		=> eventEmissionForTransition(addInventoryItemToOrder(inventoryItemId, quantity))	
 		case RemoveInventoryItemFromOrder(_, inventoryItemId, quantity)	=> eventEmissionForTransition(removeInventoryItemFromOrder(inventoryItemId, quantity))
 		case AddShippingAddressToOrder(_, shippingAddress)				=> eventEmissionForTransition(addShippingAddressToOrder(shippingAddress))
