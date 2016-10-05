@@ -6,14 +6,14 @@ import scalaz._
 
 object DomainState {
 
-	type StateTransition[A] = State[A, List[Event]]
+	type StateTransition[A]	= State[A, List[Event]]
 	type CommandExecution[A] = A => List[Event]
 
 	def unitTransition[A] = State.state[A, List[Event]](Nil)
 	
-	def applyTransitions[A](transitions: Seq[StateTransition[A]]): StateTransition[A] = {
+	def mergeTransitions[A](transitions: Seq[StateTransition[A]]): StateTransition[A] = {
 
-		def applySingleTransition[A](t: StateTransition[A], curr: StateTransition[A]): StateTransition[A] = State { 
+		def mergeSingleTransition[A](t: StateTransition[A], curr: StateTransition[A]): StateTransition[A] = State { 
 			(s: A) => {
 				lazy val (currS, currT) = curr.run(s)
 				lazy val (tS, tT) = t.run(currS)
@@ -21,9 +21,9 @@ object DomainState {
 			}
 		}
 
-		(transitions foldRight unitTransition[A]) ((t,curr) => applySingleTransition(t, curr))
+		(transitions foldRight unitTransition[A]) ((t,curr) => mergeSingleTransition(t, curr))
 	}
 
-	def execTransition[A]: StateTransition[A] => A => A = st => i => st.exec(i)
-	def evalTransition[A]: StateTransition[A] => A => List[Event] = st => i => st.eval(i)
+	def execTransition[A]: A => StateTransition[A] => A = st => tr => tr.exec(st)
+	def evalTransition[A]: A => StateTransition[A] => List[Event] = st => tr => tr.eval(st)
 }

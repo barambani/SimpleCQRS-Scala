@@ -92,8 +92,8 @@ object InventoryItemSpec extends Specification {
 	  		
 	  		lazy val item = InventoryItem(history)
 
-	  		execTransition(removeItemsFromInventory(2))(item).itemsCount mustEqual 18
-	  		execTransition(removeItemsFromInventory(2))(item).version mustEqual 4
+	  		execTransition(item)(removeItemsFromInventory(2)).itemsCount mustEqual 18
+	  		execTransition(item)(removeItemsFromInventory(2)).version mustEqual 4
 	  	}
 
 	  	"have the correct state after one command application" in {
@@ -106,7 +106,7 @@ object InventoryItemSpec extends Specification {
 	  		
 	  		lazy val item = InventoryItem(history)
 
-	  		evalTransition(removeItemsFromInventory(7))(item) match {
+	  		evalTransition(item)(removeItemsFromInventory(7)) match {
 	  			case ItemsRemovedFromInventory(i, c, s) :: Nil => {
 					i mustEqual id
 					c mustEqual 7
@@ -127,9 +127,9 @@ object InventoryItemSpec extends Specification {
 	  		lazy val item = InventoryItem(history)
 	  		lazy val transitions = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7))
 
-	  		lazy val newState = applyTransitions(transitions)
+	  		lazy val newTransition = mergeTransitions(transitions)
 
-			evalTransition(newState)(item).head.sequence mustEqual 5
+			evalTransition(item)(newTransition).head.sequence mustEqual 5
 	  	}
 
 	  	"have the correct state after commands application" in {
@@ -143,10 +143,10 @@ object InventoryItemSpec extends Specification {
 	  		lazy val item = InventoryItem(history)
 	  		lazy val transitions = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7), checkInItemsToInventory(3))
 			
-			lazy val newState: StateTransition[InventoryItem] = applyTransitions(transitions)
+			lazy val newTransition: StateTransition[InventoryItem] = mergeTransitions(transitions)
 
-	  		execTransition(newState)(item).itemsCount mustEqual 14
-	  		execTransition(newState)(item).version mustEqual 6
+	  		execTransition(item)(newTransition).itemsCount mustEqual 14
+	  		execTransition(item)(newTransition).version mustEqual 6
 	  	}
 	}
 }
