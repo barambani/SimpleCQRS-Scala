@@ -2,7 +2,7 @@ package SimpleCqrsScala.CommandSide.Domain
 
 import java.util.UUID
 import SimpleCqrsScala.CommandSide._
-import SimpleCqrsScala.CommandSide.Domain.DomainStates._
+import SimpleCqrsScala.CommandSide.Domain.DomainState._
 import OrderItems._
 
 object OrderOps {

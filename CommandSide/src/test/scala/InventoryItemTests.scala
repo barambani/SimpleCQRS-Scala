@@ -12,7 +12,7 @@ object InventoryItemSpec extends Specification {
 
 	import InventoryItemOps._
 	import AggregateRoot._
-	import DomainStates._
+	import DomainState._
 
 	val id = UUID.randomUUID
 
@@ -92,8 +92,8 @@ object InventoryItemSpec extends Specification {
 	  		
 	  		lazy val item = InventoryItem(history)
 
-	  		execState(removeItemsFromInventory(2))(item).itemsCount mustEqual 18
-	  		execState(removeItemsFromInventory(2))(item).version mustEqual 4
+	  		execTransition(removeItemsFromInventory(2))(item).itemsCount mustEqual 18
+	  		execTransition(removeItemsFromInventory(2))(item).version mustEqual 4
 	  	}
 
 	  	"have the correct state after one command application" in {
@@ -106,7 +106,7 @@ object InventoryItemSpec extends Specification {
 	  		
 	  		lazy val item = InventoryItem(history)
 
-	  		evalState(removeItemsFromInventory(7))(item) match {
+	  		evalTransition(removeItemsFromInventory(7))(item) match {
 	  			case ItemsRemovedFromInventory(i, c, s) :: Nil => {
 					i mustEqual id
 					c mustEqual 7
@@ -125,11 +125,11 @@ object InventoryItemSpec extends Specification {
   			)
 	  		
 	  		lazy val item = InventoryItem(history)
-	  		lazy val states = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7))
+	  		lazy val transitions = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7))
 
-	  		lazy val newState = mergeStateTransitions(states)
+	  		lazy val newState = applyTransitions(transitions)
 
-			evalState(newState)(item).head.sequence mustEqual 5
+			evalTransition(newState)(item).head.sequence mustEqual 5
 	  	}
 
 	  	"have the correct state after commands application" in {
@@ -141,12 +141,12 @@ object InventoryItemSpec extends Specification {
   			)
 	  		
 	  		lazy val item = InventoryItem(history)
-	  		lazy val states = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7), checkInItemsToInventory(3))
+	  		lazy val transitions = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7), checkInItemsToInventory(3))
 			
-			lazy val newState: StateTransition[InventoryItem] = mergeStateTransitions(states)
+			lazy val newState: StateTransition[InventoryItem] = applyTransitions(transitions)
 
-	  		execState(newState)(item).itemsCount mustEqual 14
-	  		execState(newState)(item).version mustEqual 6
+	  		execTransition(newState)(item).itemsCount mustEqual 14
+	  		execTransition(newState)(item).version mustEqual 6
 	  	}
 	}
 }

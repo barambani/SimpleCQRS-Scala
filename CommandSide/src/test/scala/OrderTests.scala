@@ -10,7 +10,7 @@ object OrderSpec extends Specification {
 
 	import OrderOps._
 	import AggregateRoot._
-	import DomainStates._
+	import DomainState._
 
 	val orderId = UUID.randomUUID
 	val inventoryItemId1 = UUID.randomUUID

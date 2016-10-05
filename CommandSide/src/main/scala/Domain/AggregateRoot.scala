@@ -35,7 +35,7 @@ object Aggregate {
 
 object AggregateRoot {
 
-	import DomainStates._
+	import DomainState._
 
 	def evolve[A: Aggregate](aState: A, withHistory: List[Event]): A =
 		(withHistory foldRight aState) {
@@ -45,9 +45,9 @@ object AggregateRoot {
 	def rehydrated[A: Aggregate]: List[Event] => A =
 		history => implicitly[Aggregate[A]].apply(history)
 
-	def newStateTransition[A: Aggregate](stateGenerator: A => List[Event]): StateTransition[A] = 
+	def newStateTransition[A: Aggregate](commandExecution: CommandExecution[A]): StateTransition[A] = 
 		for {
-			es 	<- State.gets(stateGenerator)
+			es 	<- State.gets(commandExecution)
 			_ 	<- State.modify { s: A => evolve(s, es) }
 		} yield es
 }
