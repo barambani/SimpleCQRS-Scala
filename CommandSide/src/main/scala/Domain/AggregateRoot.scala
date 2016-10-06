@@ -19,11 +19,10 @@ trait Aggregate[A] {
 }
 object Aggregate {
 
-	import InventoryItemOps._
 	import OrderOps._
 	
 	implicit lazy val inventoryItemAggregate = new Aggregate[InventoryItem] {
-		lazy val newState: InventoryItem => Event => InventoryItem = InventoryItemOps.newState
+		lazy val newState: InventoryItem => Event => InventoryItem = InventoryItem.newState
 		lazy val apply: List[Event] => InventoryItem = InventoryItem.apply
 	}
 

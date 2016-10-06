@@ -1,3 +1,5 @@
+import sbt._
+
 lazy val prjcSettings = Seq (
 	scalaVersion := "2.11.8",
 	version := "0.0.1",
@@ -6,9 +8,22 @@ lazy val prjcSettings = Seq (
 
 lazy val commandSide = (project in file(".")).settings(prjcSettings: _*)
 
+resolvers += Resolver.sonatypeRepo("releases")
+resolvers += Resolver.sonatypeRepo("snapshots")
+
+val monocleVersion = "1.2.2"
+
 libraryDependencies ++= Seq(
 	"org.scalaz" %% "scalaz-core" % "7.2.5",
-    "org.specs2" %% "specs2-core" % "3.8.4" % "test"
+
+    "com.github.julien-truffaut"  %%  "monocle-core"    % monocleVersion,
+  	"com.github.julien-truffaut"  %%  "monocle-generic" % monocleVersion,
+  	"com.github.julien-truffaut"  %%  "monocle-macro"   % monocleVersion,        
+  	"com.github.julien-truffaut"  %%  "monocle-state"   % monocleVersion,     
+  	"com.github.julien-truffaut"  %%  "monocle-refined" % monocleVersion,
+	"com.github.julien-truffaut"  %%  "monocle-law"     % monocleVersion % "test",
+
+	"org.specs2" %% "specs2-core" % "3.8.4" % "test"
 )
 
 scalacOptions in Test ++= Seq("-Yrangepos")
@@ -18,3 +33,5 @@ scalacOptions ++= Seq (
 	"-deprecation",
 	"-target:jvm-1.8"
 )
+
+addCompilerPlugin("org.scalamacros" %% "paradise" % "2.1.0" cross CrossVersion.full)

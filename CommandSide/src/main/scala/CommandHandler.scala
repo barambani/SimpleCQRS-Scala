@@ -13,7 +13,7 @@ object CommandHandler {
 	lazy private val applyCommand: Command => Option[List[Event] => List[Event]] =
 		command => ApplyCommandToInventoryItem.lift(command) orElse ApplyCommandToOrder.lift(command)
 
-	import InventoryItemOps._
+	import InventoryItem._
 	private def ApplyCommandToInventoryItem: PartialFunction[Command, List[Event] => List[Event]] = {
 		case CreateInventoryItem(id, name) 		=> Nil => InventoryItemCreated(id, name, 1) :: Nil
 		case DeactivateInventoryItem(_) 		=> eventEmissionForTransition(deactivateInventoryItem)

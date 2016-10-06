@@ -10,7 +10,7 @@ import java.util.UUID
 
 object InventoryItemSpec extends Specification {
 
-	import InventoryItemOps._
+	import InventoryItem._
 	import AggregateRoot._
 	import DomainState._
 
@@ -26,7 +26,7 @@ object InventoryItemSpec extends Specification {
 
   			finalState.id mustEqual id
 			finalState.name mustEqual "Test Inventory Item"
-			finalState.isActivated mustEqual true
+			finalState.isActive mustEqual true
 	  	}
 
 	  	"change state correctly after receiving in sequence events" in {
@@ -39,7 +39,7 @@ object InventoryItemSpec extends Specification {
   			val finalState = InventoryItem(history)
 
   			finalState.version mustEqual 2
-  			finalState.isActivated mustEqual false
+  			finalState.isActive mustEqual false
 	  	}
 
 	  	"not change state after receiving out of sequence events" in {
@@ -52,7 +52,7 @@ object InventoryItemSpec extends Specification {
   			val finalState = InventoryItem(history)
 
   			finalState.version mustEqual 1
-  			finalState.isActivated mustEqual true
+  			finalState.isActive mustEqual true
 	  	}
 
 	  	"have the correct name after the InventoryItemRenamed event" in {
