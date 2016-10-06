@@ -26,4 +26,7 @@ object DomainState {
 
 	def execTransition[A]: A => StateTransition[A] => A = st => tr => tr.exec(st)
 	def evalTransition[A]: A => StateTransition[A] => List[Event] = st => tr => tr.eval(st)
+
+	def execTransitions[A]: A => Seq[StateTransition[A]] => A = st => trns => mergeTransitions(trns) exec st
+	def evalTransitions[A]: A => Seq[StateTransition[A]] => List[Event] = st => trns => mergeTransitions(trns) eval st
 }

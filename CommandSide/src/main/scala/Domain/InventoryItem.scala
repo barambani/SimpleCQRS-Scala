@@ -53,8 +53,8 @@ object InventoryItem {
 	//	Evolution
 	lazy val newState: InventoryItem => Event => InventoryItem = 
 		aggregate => event =>
-			if(!hasACorrectIdCheck(event)(aggregate)) aggregate // TODO: Error in this case
-			else if(!isInSequenceCheck(event)(aggregate)) aggregate // TODO: Error in this case
+			if(!hasACorrectId(event)(aggregate)) aggregate // TODO: Error in this case
+			else if(!isInSequence(event)(aggregate)) aggregate // TODO: Error in this case
 			else event match {
 				case InventoryItemCreated(newId, newName, sequence) => 
 					if(theNameIsValid(newName)) new InventoryItem(newId, newName, true, version = sequence)

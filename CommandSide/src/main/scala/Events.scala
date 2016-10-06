@@ -32,9 +32,9 @@ final case class UnknownHappened(id: UUID, sequence: Long) extends Event
 object EventOps {
 	import Domain._
 
-	lazy val hasACorrectIdCheck: Identified => Identity => Boolean = 
+	lazy val hasACorrectId: Identified => Identity => Boolean = 
 		event => aggregate => aggregate.id == new UUID(0, 0) || event.id == aggregate.id
 
-	lazy val isInSequenceCheck: Sequenced => Versioned => Boolean = 
+	lazy val isInSequence: Sequenced => Versioned => Boolean = 
 		event => aggregate => event.sequence == aggregate.expectedNextVersion
 }

@@ -31,7 +31,7 @@ object Order {
 	def apply(history: Event*): Order = apply(history.toList)
 	def apply(history: List[Event]): Order = evolve(new Order, history)
 
-	//	Behavior
+	//	Commands
 	def addInventoryItemToOrder(inventoryItemId: UUID, quantity: Int): StateTransition[Order] =
 		newStateTransition(ord => InventoryItemAddedToOrder(ord.id, inventoryItemId, quantity, ord.expectedNextVersion) :: Nil)
 
@@ -59,11 +59,12 @@ object Order {
 					else Nil // TODO: Error, the order cannot be submitted
 		)
 
+	//	Evolution
 	lazy val newState: Order => Event => Order = 
 		aggregate => event =>
 			if(!aggregate.canBeChanged) aggregate // TODO: Error, no changes are permitted after submission
-			else if(!hasACorrectIdCheck(event)(aggregate)) aggregate // TODO: Error in this case
-			else if(!isInSequenceCheck(event)(aggregate)) aggregate // TODO: Error in this case
+			else if(!hasACorrectId(event)(aggregate)) aggregate // TODO: Error in this case
+			else if(!isInSequence(event)(aggregate)) aggregate // TODO: Error in this case
 			else event match {
 				case OrderCreated(newId, description, sequence) => 
 					new Order(id = newId, description = description, version = sequence)

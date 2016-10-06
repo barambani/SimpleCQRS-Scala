@@ -127,9 +127,7 @@ object InventoryItemSpec extends Specification {
 	  		lazy val item = InventoryItem(history)
 	  		lazy val transitions = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7))
 
-	  		lazy val newTransition = mergeTransitions(transitions)
-
-			evalTransition(item)(newTransition).head.sequence mustEqual 5
+			evalTransitions(item)(transitions).head.sequence mustEqual 5
 	  	}
 
 	  	"have the correct state after commands application" in {
