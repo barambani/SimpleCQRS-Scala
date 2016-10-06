@@ -8,7 +8,6 @@ import java.util.UUID
 
 object OrderSpec extends Specification {
 
-	import OrderOps._
 	import AggregateRoot._
 	import DomainState._
 

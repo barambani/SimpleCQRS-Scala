@@ -20,6 +20,7 @@ import scalaz._
 	lazy val countAfterRemoval: Int => Int = toRemove => itemsCount - toRemove
 	lazy val itemsCanBeRemoved: Int => Boolean = count => itemsCount >= count
 }
+
 object InventoryItem {
 
 	import EventOps._
@@ -30,21 +31,23 @@ object InventoryItem {
 
 	//	Commands
 	def deactivateInventoryItem: StateTransition[InventoryItem] = 
-		newStateTransition(item => InventoryItemDeactivated(item.id, nextStateVersion(item)) :: Nil)
+		newStateTransition(item => InventoryItemDeactivated(item.id, item.expectedNextVersion) :: Nil)
 
 	def checkInItemsToInventory(count: Int): StateTransition[InventoryItem] =
-		newStateTransition(item => ItemsCheckedInToInventory(item.id, count, nextStateVersion(item)) :: Nil)
+		newStateTransition(item => ItemsCheckedInToInventory(item.id, count, item.expectedNextVersion) :: Nil)
 
 	def renameInventoryItem(newName: String): StateTransition[InventoryItem] = 
 		newStateTransition(
-			item => if(theNameIsValid(newName)) InventoryItemRenamed(item.id, newName, nextStateVersion(item)) :: Nil 
-				 else Nil // TODO: Error, the new name is not valid
+			item =>
+				if(theNameIsValid(newName)) InventoryItemRenamed(item.id, newName, item.expectedNextVersion) :: Nil 
+				else Nil // TODO: Error, the new name is not valid
 		)
 	
 	def removeItemsFromInventory(count: Int): StateTransition[InventoryItem] = 
 		newStateTransition(
-			item => if(item.itemsCanBeRemoved(count)) ItemsRemovedFromInventory(item.id, count, nextStateVersion(item)) :: Nil
-				 else Nil // TODO: Error, not enough items to remove
+			item =>
+				if(item.itemsCanBeRemoved(count)) ItemsRemovedFromInventory(item.id, count, item.expectedNextVersion) :: Nil
+				else Nil // TODO: Error, not enough items to remove
 		)
 
 	//	Evolution
@@ -58,30 +61,30 @@ object InventoryItem {
 					else aggregate // TODO: Error, the new name is not valid
 				
 				case InventoryItemDeactivated(_, sequence) =>
-					withActiveStatus(false, sequence)(aggregate)
+					getNewWithActiveStatus(false, sequence)(aggregate)
 
 				case InventoryItemRenamed(_, newName, sequence) => 
-					if(theNameIsValid(newName)) withName(newName, sequence)(aggregate)
+					if(theNameIsValid(newName)) getNewWithName(newName, sequence)(aggregate)
 					else aggregate // TODO: Error, the new name is not valid
 
 				case ItemsCheckedInToInventory(_, count, sequence) => 
-					withCheckedInItems(aggregate.countAfterCheckIn(count), sequence)(aggregate)
+					getNewWithCheckedInItems(aggregate.countAfterCheckIn(count), sequence)(aggregate)
 				
 				case ItemsRemovedFromInventory(_, count, sequence) => 
-					if(aggregate.itemsCanBeRemoved(count)) withCheckedInItems(aggregate.countAfterRemoval(count), sequence)(aggregate)
+					if(aggregate.itemsCanBeRemoved(count)) getNewWithCheckedInItems(aggregate.countAfterRemoval(count), sequence)(aggregate)
 					else aggregate // TODO: Error, not enough items to remove
 				
 				case _ => aggregate // TODO: log event ignored with event details
 			}
 
-	private lazy val withName: (String, Long) => InventoryItem => InventoryItem =
-		(n, s) => InventoryItem.version.set(s) compose InventoryItem.name.set(n)
+	private lazy val getNewWithName: (String, Long) => InventoryItem => InventoryItem =
+		(n, ver) => InventoryItem.version.set(ver) compose InventoryItem.name.set(n)
 
-	private lazy val withCheckedInItems: (Int, Long) => InventoryItem => InventoryItem =
-		(is, s) => InventoryItem.version.set(s) compose InventoryItem.itemsCount.set(is)
+	private lazy val getNewWithCheckedInItems: (Int, Long) => InventoryItem => InventoryItem =
+		(is, ver) => InventoryItem.version.set(ver) compose InventoryItem.itemsCount.set(is)
 
-	private lazy val withActiveStatus: (Boolean, Long) => InventoryItem => InventoryItem =
-		(a, s) => InventoryItem.version.set(s) compose InventoryItem.isActive.set(a)
+	private lazy val getNewWithActiveStatus: (Boolean, Long) => InventoryItem => InventoryItem =
+		(a, ver) => InventoryItem.version.set(ver) compose InventoryItem.isActive.set(a)
 
 	private lazy val theNameIsValid: String => Boolean = n => !n.isEmpty
 }

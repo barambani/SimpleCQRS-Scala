@@ -22,7 +22,7 @@ object CommandHandler {
 		case RemoveItemsFromInventory(_, count)	=> eventEmissionForTransition(removeItemsFromInventory(count))
 	}
 
-	import OrderOps._
+	import Order._
 	private def ApplyCommandToOrder: PartialFunction[Command, List[Event] => List[Event]] = {
 		case CreateOrder(id, customerId, customerName) 					=> Nil => OrderCreated(id, s"$customerId - $customerName", 1) :: Nil
 		case AddInventoryItemToOrder(_, inventoryItemId, quantity) 		=> eventEmissionForTransition(addInventoryItemToOrder(inventoryItemId, quantity))	

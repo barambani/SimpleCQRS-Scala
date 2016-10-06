@@ -2,18 +2,6 @@ package SimpleCqrsScala.CommandSide
 
 import java.util.UUID
 
-object EventOps {
-	import Domain._
-
-	lazy val hasACorrectIdCheck: Identified => Identity => Boolean = 
-		event => aggregate => aggregate.id == new UUID(0, 0) || event.id == aggregate.id
-
-	lazy val isInSequenceCheck: Sequenced => Versioned => Boolean = 
-		event => aggregate => event.sequence == nextStateVersion(aggregate)
-
-	lazy val nextStateVersion: Versioned => Long = aggregate => aggregate.version + 1
-}
-
 trait Identified {
 	val id: UUID
 }
@@ -40,3 +28,13 @@ final case class ItemsCheckedInToInventory(id: UUID, count: Int, sequence: Long)
 final case class ItemsRemovedFromInventory(id: UUID, count: Int, sequence: Long) extends Event
 
 final case class UnknownHappened(id: UUID, sequence: Long) extends Event
+
+object EventOps {
+	import Domain._
+
+	lazy val hasACorrectIdCheck: Identified => Identity => Boolean = 
+		event => aggregate => aggregate.id == new UUID(0, 0) || event.id == aggregate.id
+
+	lazy val isInSequenceCheck: Sequenced => Versioned => Boolean = 
+		event => aggregate => event.sequence == aggregate.expectedNextVersion
+}

@@ -7,6 +7,7 @@ import scalaz._
 
 trait Versioned {
 	val version: Long
+	val expectedNextVersion: Long = version + 1
 }
 
 trait Identity {
@@ -19,15 +20,13 @@ trait Aggregate[A] {
 }
 object Aggregate {
 
-	import OrderOps._
-	
 	implicit lazy val inventoryItemAggregate = new Aggregate[InventoryItem] {
 		lazy val newState: InventoryItem => Event => InventoryItem = InventoryItem.newState
 		lazy val apply: List[Event] => InventoryItem = InventoryItem.apply
 	}
 
 	implicit lazy val orderAggregate = new Aggregate[Order] {
-		lazy val newState: Order => Event => Order = OrderOps.newState
+		lazy val newState: Order => Event => Order = Order.newState
 		lazy val apply: List[Event] => Order = Order.apply
 	}
 }
