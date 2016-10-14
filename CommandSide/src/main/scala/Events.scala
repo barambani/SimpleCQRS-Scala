@@ -19,6 +19,8 @@ final case class InventoryItemRemovedFromOrder(id: UUID, inventoryItemId: UUID, 
 final case class ShippingAddressAddedToOrder(id: UUID, shippingAddress: String, sequence: Long) extends Event
 final case class OrderPayed(id: UUID, sequence: Long) extends Event
 final case class OrderSubmitted(id: UUID, sequence: Long) extends Event
+final case class OrderDispatched(id: UUID, sequence: Long) extends Event
+final case class OrderVoided(id: UUID, reason: String, sequence: Long) extends Event
 
 //	Inventory Item
 final case class InventoryItemCreated(id: UUID, name: String, sequence: Long) extends Event

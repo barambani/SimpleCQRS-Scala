@@ -16,7 +16,7 @@ object CommandHandler {
 	import InventoryItem._
 	private def ApplyCommandToInventoryItem: PartialFunction[Command, List[Event] => List[Event]] = {
 		case CreateInventoryItem(id, name) 		=> Nil => InventoryItemCreated(id, name, 1) :: Nil
-		case DeactivateInventoryItem(_) 		=> eventEmissionForTransition(deactivateInventoryItem)
+		case DeactivateInventoryItem(_) 		=> eventEmissionForTransition(deactivateInventoryItem())
 		case RenameInventoryItem(_, newName) 	=> eventEmissionForTransition(renameInventoryItem(newName))
 		case CheckInItemsToInventory(_, count)	=> eventEmissionForTransition(checkInItemsToInventory(count))
 		case RemoveItemsFromInventory(_, count)	=> eventEmissionForTransition(removeItemsFromInventory(count))
@@ -25,11 +25,11 @@ object CommandHandler {
 	import Order._
 	private def ApplyCommandToOrder: PartialFunction[Command, List[Event] => List[Event]] = {
 		case CreateOrder(id, customerId, customerName) 					=> Nil => OrderCreated(id, s"$customerId - $customerName", 1) :: Nil
-		case AddInventoryItemToOrder(_, inventoryItemId, quantity) 		=> eventEmissionForTransition(addInventoryItemToOrder(inventoryItemId, quantity))	
-		case RemoveInventoryItemFromOrder(_, inventoryItemId, quantity)	=> eventEmissionForTransition(removeInventoryItemFromOrder(inventoryItemId, quantity))
+		case AddInventoryItemToOrder(_, inventoryItemId, quantity) 		=> eventEmissionForTransition(addInventoryItemToOrder(inventoryItemId)(quantity))	
+		case RemoveInventoryItemFromOrder(_, inventoryItemId, quantity)	=> eventEmissionForTransition(removeInventoryItemFromOrder(inventoryItemId)(quantity))
 		case AddShippingAddressToOrder(_, shippingAddress)				=> eventEmissionForTransition(addShippingAddressToOrder(shippingAddress))
-		case PayForTheOrder(_) 											=> eventEmissionForTransition(payTheBalance)
-		case SubmitTheOrder(_)											=> eventEmissionForTransition(submit)
+		case PayForTheOrder(_) 											=> eventEmissionForTransition(payTheBalance())
+		case SubmitTheOrder(_)											=> eventEmissionForTransition(submit())
 	}
 
 	private def eventEmissionForTransition[A](stateTransition: StateTransition[A])(implicit a: Aggregate[A]): List[Event] => List[Event] =
