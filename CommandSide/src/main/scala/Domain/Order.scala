@@ -8,7 +8,15 @@ import scala.language.higherKinds
 import OrderItems._
 
 import AggregateRoot._
-import EventOps._
+import Event._
+
+sealed trait OrderStatus extends Product with Serializable
+final case object Created extends OrderStatus
+final case object Payed extends OrderStatus
+final case object Submitted extends OrderStatus
+final case object WaitingForItems extends OrderStatus
+final case object Dispatched extends OrderStatus
+final case object Voided extends OrderStatus
 
 @Lenses case class Order private[Order] (
 	id: UUID = new UUID(0, 0),
@@ -18,6 +26,7 @@ import EventOps._
 	isSubmitted: Boolean = false,
 	items: OrderItems = OrderItems.empty,
 	allTheItemsInStock: Boolean = false,
+	status: OrderStatus = Created,
 	version: Long = 0) extends Identity with Versioned {
 
 	//	Domain logic
@@ -26,6 +35,7 @@ import EventOps._
 	lazy val canBePayed: Boolean = !isPayed
 	lazy val canBeSubmitted: Boolean = isPayed && theShippingAddressIsValid
 	lazy val canBeDispatched: Boolean = isPayed && theShippingAddressIsValid && allTheItemsInStock
+	lazy val canBeVoided: Boolean = isPayed && theShippingAddressIsValid && allTheItemsInStock
 }
 
 object Order {

@@ -7,8 +7,8 @@ object CommandHandler {
 
 	import DomainState._
 	
-	def handle(retrieveHistory: Identified => List[Event])(command: Command): List[Event] =
-		applyCommand(command) map (f => (f compose retrieveHistory)(command)) getOrElse Nil
+	def handle(historyRepository: Identified => List[Event])(command: Command): List[Event] =
+		applyCommand(command) map (f => (f compose historyRepository)(command)) getOrElse Nil
 
 	lazy private val applyCommand: Command => Option[List[Event] => List[Event]] =
 		command => ApplyCommandToInventoryItem.lift(command) orElse ApplyCommandToOrder.lift(command)

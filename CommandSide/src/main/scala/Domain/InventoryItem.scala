@@ -23,7 +23,7 @@ import scalaz._
 
 object InventoryItem {
 
-	import EventOps._
+	import Event._
 	import AggregateRoot._
 
 	//	Factories

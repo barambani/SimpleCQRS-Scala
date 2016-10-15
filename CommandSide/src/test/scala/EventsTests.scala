@@ -2,6 +2,7 @@ package SimpleCqrsScala.CommandSide.Test
 
 import org.specs2.mutable._
 import SimpleCqrsScala.CommandSide._
+import SimpleCqrsScala.CommandSide.Domain._
 
 import java.util.UUID
 

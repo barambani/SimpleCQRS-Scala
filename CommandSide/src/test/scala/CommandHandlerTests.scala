@@ -3,12 +3,11 @@ package SimpleCqrsScala.CommandSide.Test
 import java.util.UUID
 import org.specs2.mutable._
 import scala.collection.mutable._
+import SimpleCqrsScala.CommandSide.Domain._
 
 import SimpleCqrsScala.CommandSide._
 
 object CommandHandlerSpec extends Specification {
-
-	import CommandHandler._
 
 	"The Command Handler" should {
 
@@ -22,8 +21,8 @@ object CommandHandlerSpec extends Specification {
 			InventoryItemCreated(id, "First Inventory Item Name", 1)
 		)
 		
-		def eventStoreRetriever(idContainer: Identified): List[Event] = history
-		def handleWithSideEffect = handle(eventStoreRetriever) _
+		lazy val eventStoreRepository: Identified => List[Event] = _ => history
+		lazy val handleWithSideEffect: Command => List[Event] = CommandHandler.handle(eventStoreRepository) _
 
 	  	"return an InventoryItemCreated event when receives the command CreateInventoryItem" in {
 

@@ -1,5 +1,7 @@
 package SimpleCqrsScala.CommandSide
 
+import SimpleCqrsScala.CommandSide.Domain._
+
 trait Show[A] {
 	def stringFor(x: A): String
 }

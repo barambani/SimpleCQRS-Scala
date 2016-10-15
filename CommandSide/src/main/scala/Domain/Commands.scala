@@ -1,4 +1,4 @@
-package SimpleCqrsScala.CommandSide
+package SimpleCqrsScala.CommandSide.Domain
 
 import java.util.UUID
 
@@ -13,7 +13,6 @@ final case class PayForTheOrder(id: UUID) extends Command
 final case class SubmitTheOrder(id: UUID) extends Command
 final case class DispatchTheOrder(id: UUID) extends Command
 final case class VoidTheOrder(id: UUID, reason: String) extends Command
-
 
 //	Inventory Item
 final case class CreateInventoryItem(id: UUID, name: String) extends Command
