@@ -30,7 +30,6 @@ final case class InventoryItemRemovedFromOrder(id: UUID, inventoryItemId: UUID, 
 final case class ShippingAddressAddedToOrder(id: UUID, shippingAddress: String, sequence: Long) extends Event
 final case class OrderPayed(id: UUID, sequence: Long) extends Event
 final case class OrderSubmitted(id: UUID, sequence: Long) extends Event
-final case class OrderFailedToCheckOutItem(id: UUID, inventoryItemId: UUID, quantity: Int, sequence: Long) extends Event
 final case class OrderDispatched(id: UUID, sequence: Long) extends Event
 final case class OrderVoided(id: UUID, reason: String, sequence: Long) extends Event
 
@@ -42,8 +41,3 @@ final case class ItemsCheckedInToInventory(id: UUID, count: Int, sequence: Long)
 final case class ItemsRemovedFromInventory(id: UUID, count: Int, sequence: Long) extends Event
 
 final case class UnknownHappened(id: UUID, sequence: Long) extends Event
-
-//	Order -> Inventory Item
-final case class OrderItemRequested(orderId: UUID, itemId: UUID, quantity: Int) extends DomainEvent
-final case class OrderItemOutOfStock(orderId: UUID, itemId: UUID, quantity: Int) extends DomainEvent
-final case class OrderItemAvailable(orderId: UUID, itemId: UUID, quantity: Int) extends DomainEvent

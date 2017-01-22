@@ -80,7 +80,7 @@ object Order {
 					else Nil // TODO: Error, the order cannot be submitted
 		)
 
-	//	Evolution
+	//	Aggregate Evolution
 	lazy val newState: Order => Event => Order = 
 		aggregate => event =>
 			if(!hasACorrectId(event)(aggregate)) aggregate // TODO: Error in this case
@@ -93,25 +93,21 @@ object Order {
 					withItems(addToItems(aggregate.items, inventoryItemId, quantity))(sequence)(aggregate)
 					
 				case InventoryItemRemovedFromOrder(_, inventoryItemId, quantity, sequence) => 
-					if(canRemoveTheItem(aggregate.items, inventoryItemId, quantity))
-						withItems(removeFromItems(aggregate.items, inventoryItemId, quantity))(sequence)(aggregate)
-					else 
-						aggregate // TODO: Error, not enough items to remove
-
+					withItems(removeFromItems(aggregate.items, inventoryItemId, quantity))(sequence)(aggregate)
+					
 				case ShippingAddressAddedToOrder(_, shippingAddress, sequence) => 
 					withAddress(shippingAddress)(sequence)(aggregate)
 
 				case OrderPayed(_, sequence) =>
-					if(aggregate.canBePayed) afterPayed(sequence)(aggregate)
-					else aggregate // TODO: Error, cannot be payed twice
+					afterPayed(sequence)(aggregate)
 
 				case OrderSubmitted(_, sequence) =>
-					if(aggregate.canBeSubmitted) afterSubmitted(sequence)(aggregate)
-					else aggregate // TODO: Error, the order cannot be submitted
+					afterSubmitted(sequence)(aggregate)
 				
 				case _ => aggregate // TODO: log event ignored with event details
 			}
 
+	//	Lenses
 	private lazy val withAddress: String => Long => Order => Order =
 		addr => ver => Order.version.set(ver) compose Order.shippingAddress.set(addr)
 

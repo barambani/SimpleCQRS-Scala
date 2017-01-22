@@ -18,7 +18,8 @@ import scalaz._
 	//	Domain logic
 	lazy val countAfterCheckIn: Int => Int = toCheckin => itemsCount + toCheckin
 	lazy val countAfterRemoval: Int => Int = toRemove => itemsCount - toRemove
-	lazy val itemsCanBeRemoved: Int => Boolean = count => itemsCount >= count
+	lazy val itemsAvailableInStock: Int => Boolean = count => itemsCount >= count
+	lazy val itemsMissingToFulfil: Int => Int = count => count - itemsCount
 }
 
 object InventoryItem {
@@ -47,45 +48,44 @@ object InventoryItem {
 	lazy val removeItemsFromInventory: Int => StateTransition[InventoryItem] = 
 		count => newStateTransition(
 			item =>
-				if(item.itemsCanBeRemoved(count)) ItemsRemovedFromInventory(item.id, count, item.expectedNextVersion) :: Nil
-				else Nil // TODO: Error, not enough items to remove
+				if(item.itemsAvailableInStock(count)) ItemsRemovedFromInventory(item.id, count, item.expectedNextVersion) :: Nil
+				else Nil // TODO: Error, no items left
 		)
 
-	//	Evolution
+	//	Aggregate Evolution
 	lazy val newState: InventoryItem => Event => InventoryItem = 
 		aggregate => event =>
 			if(!hasACorrectId(event)(aggregate)) aggregate // TODO: Error in this case
 			else if(!isInSequence(event)(aggregate)) aggregate // TODO: Error in this case
 			else event match {
 				case InventoryItemCreated(newId, newName, sequence) => 
-					if(theNameIsValid(newName)) new InventoryItem(newId, newName, true, version = sequence)
-					else aggregate // TODO: Error, the new name is not valid
+					new InventoryItem(newId, newName, true, version = sequence)
 				
 				case InventoryItemDeactivated(_, sequence) =>
-					getNewWithActiveStatus(false)(sequence)(aggregate)
+					withActiveStatus(false)(sequence)(aggregate)
 
 				case InventoryItemRenamed(_, newName, sequence) => 
-					if(theNameIsValid(newName)) getNewWithName(newName)(sequence)(aggregate)
-					else aggregate // TODO: Error, the new name is not valid
+					withName(newName)(sequence)(aggregate)
 
 				case ItemsCheckedInToInventory(_, count, sequence) => 
-					getNewWithCheckedInItems(aggregate.countAfterCheckIn(count))(sequence)(aggregate)
+					withCheckedInItems(aggregate.countAfterCheckIn(count))(sequence)(aggregate)
 				
 				case ItemsRemovedFromInventory(_, count, sequence) => 
-					if(aggregate.itemsCanBeRemoved(count)) getNewWithCheckedInItems(aggregate.countAfterRemoval(count))(sequence)(aggregate)
-					else aggregate // TODO: Error, not enough items to remove
+					withCheckedInItems(aggregate.countAfterRemoval(count))(sequence)(aggregate)
 				
 				case _ => aggregate // TODO: log event ignored with event details
 			}
 
-	private lazy val getNewWithName: String => Long => InventoryItem => InventoryItem =
+	//	Lenses
+	private lazy val withName: String => Long => InventoryItem => InventoryItem =
 		n => ver => InventoryItem.version.set(ver) compose InventoryItem.name.set(n)
 
-	private lazy val getNewWithCheckedInItems: Int => Long => InventoryItem => InventoryItem =
+	private lazy val withCheckedInItems: Int => Long => InventoryItem => InventoryItem =
 		is => ver => InventoryItem.version.set(ver) compose InventoryItem.itemsCount.set(is)
 
-	private lazy val getNewWithActiveStatus: Boolean => Long => InventoryItem => InventoryItem =
+	private lazy val withActiveStatus: Boolean => Long => InventoryItem => InventoryItem =
 		a => ver => InventoryItem.version.set(ver) compose InventoryItem.isActive.set(a)
 
+	//	Validation
 	private lazy val theNameIsValid: String => Boolean = n => !n.isEmpty
 }

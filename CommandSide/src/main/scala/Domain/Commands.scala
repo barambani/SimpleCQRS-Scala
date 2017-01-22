@@ -11,6 +11,8 @@ final case class RemoveInventoryItemFromOrder(id: UUID, inventoryItemId: UUID, q
 final case class AddShippingAddressToOrder(id: UUID, shippingAddress: String) extends Command
 final case class PayForTheOrder(id: UUID) extends Command
 final case class SubmitTheOrder(id: UUID) extends Command
+final case class MarkOrderItemOutOfStock(id: UUID, inventoryItemId: UUID, quantity: Int) extends Command
+final case class MarkOrderItemInStock(id: UUID, inventoryItemId: UUID, quantity: Int) extends Command
 final case class DispatchTheOrder(id: UUID) extends Command
 final case class VoidTheOrder(id: UUID, reason: String) extends Command
 
