@@ -29,7 +29,7 @@ object OrderSpec extends Specification {
 	  			OrderCreated(orderId, "Test Order", 1)
   			)
 	  		
-	  		val finalState = Order(history)
+	  		val finalState = Order.rehydrate(history)
 
 			finalState.items get inventoryItemId1 mustEqual Some(7)
 			finalState.items get inventoryItemId2 mustEqual Some(3)
@@ -50,7 +50,7 @@ object OrderSpec extends Specification {
 	  			OrderCreated(orderId, "Test Order", 1)
   			)
 	  		
-	  		val finalState = Order(history)
+	  		val finalState = Order.rehydrate(history)
 
 			finalState.items get inventoryItemId1 mustEqual Some(6)
 			finalState.items get inventoryItemId2 mustEqual Some(5)
@@ -71,7 +71,7 @@ object OrderSpec extends Specification {
 	  			OrderCreated(orderId, "Test Order", 1)
   			)
 	  		
-	  		val finalState = Order(history)
+	  		val finalState = Order.rehydrate(history)
 
 			finalState.items get inventoryItemId1 mustEqual Some(5)
 			finalState.items get inventoryItemId2 mustEqual Some(2)

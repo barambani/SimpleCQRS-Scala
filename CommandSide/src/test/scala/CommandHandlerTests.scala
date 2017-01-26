@@ -9,20 +9,20 @@ import SimpleCqrsScala.CommandSide._
 
 object CommandHandlerSpec extends Specification {
 
-	"The Command Handler" should {
+	val id = UUID.randomUUID
+	val history = List(
+		UnknownHappened(id, 6),
+		ItemsRemovedFromInventory(id, 4, 5),
+		ItemsRemovedFromInventory(id, 3, 4),
+		InventoryItemRenamed(id, "Second Inventory Item Name", 3),
+		ItemsCheckedInToInventory(id, 25, 2),
+		InventoryItemCreated(id, "First Inventory Item Name", 1)
+	)
+	
+	lazy val eventStoreRepository: Identified => List[Event] = _ => history
+	lazy val handleWithSideEffect: Command => List[Event] = CommandHandler.handle(eventStoreRepository) _
 
-		val id = UUID.randomUUID
-		val history = List(
-			UnknownHappened(id, 6),
-			ItemsRemovedFromInventory(id, 4, 5),
-			ItemsRemovedFromInventory(id, 3, 4),
-			InventoryItemRenamed(id, "Second Inventory Item Name", 3),
-			ItemsCheckedInToInventory(id, 25, 2),
-			InventoryItemCreated(id, "First Inventory Item Name", 1)
-		)
-		
-		lazy val eventStoreRepository: Identified => List[Event] = _ => history
-		lazy val handleWithSideEffect: Command => List[Event] = CommandHandler.handle(eventStoreRepository) _
+	"The Command Handler" should {
 
 	  	"return an InventoryItemCreated event when receives the command CreateInventoryItem" in {
 

@@ -15,19 +15,19 @@ trait Identity {
 }
 
 trait Aggregate[A] {
-	val apply: List[Event] => A
 	val newState: A => Event => A
+	val rehydrate: List[Event] => A
 }
 object Aggregate {
 
-	implicit lazy val inventoryItemAggregate = new Aggregate[InventoryItem] {
+	implicit object InventoryItemAggregate extends Aggregate[InventoryItem] {
 		lazy val newState: InventoryItem => Event => InventoryItem = InventoryItem.newState
-		lazy val apply: List[Event] => InventoryItem = InventoryItem.apply
+		lazy val rehydrate: List[Event] => InventoryItem = InventoryItem.rehydrate
 	}
 
-	implicit lazy val orderAggregate = new Aggregate[Order] {
+	implicit object OrderAggregate extends Aggregate[Order] {
 		lazy val newState: Order => Event => Order = Order.newState
-		lazy val apply: List[Event] => Order = Order.apply
+		lazy val rehydrate: List[Event] => Order = Order.rehydrate
 	}
 }
 
@@ -35,17 +35,14 @@ object AggregateRoot {
 
 	import DomainState._
 
-	def evolve[A: Aggregate](aState: A, withHistory: List[Event]): A =
-		(withHistory foldRight aState) {
-			(e, s) => implicitly[Aggregate[A]].newState(s)(e)
-		}
+	def evolve[A: Aggregate](aState: A)(withHistory: List[Event])(implicit AGG: Aggregate[A]): A =
+		withHistory.foldRight(aState){ (e, s) => AGG.newState(s)(e) }
 
-	def rehydrated[A: Aggregate]: List[Event] => A =
-		history => implicitly[Aggregate[A]].apply(history)
+	def rehydrated[A: Aggregate](history: List[Event])(implicit AGG: Aggregate[A]): A = AGG.rehydrate(history)
 
 	def newStateTransition[A: Aggregate](commandExecution: CommandExecution[A]): StateTransition[A] = 
 		for {
 			es 	<- State.gets(commandExecution)
-			_ 	<- State.modify { s: A => evolve(s, es) }
+			_ 	<- State.modify { s: A => evolve(s)(es) }
 		} yield es
 }

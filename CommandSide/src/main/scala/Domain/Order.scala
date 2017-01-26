@@ -39,8 +39,8 @@ final case object Voided extends OrderStatus
 object Order {
 	
 	//	Factories
-	def apply(history: Event*): Order = apply(history.toList)
-	def apply(history: List[Event]): Order = evolve(new Order, history)
+	def rehydrate(history: Event*): Order = rehydrate(history.toList)
+	def rehydrate(history: List[Event]): Order = evolve(new Order)(history)
 
 	//	Commands
 	lazy val addInventoryItemToOrder: UUID => Int => StateTransition[Order] =

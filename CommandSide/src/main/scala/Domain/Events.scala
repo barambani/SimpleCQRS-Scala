@@ -10,9 +10,7 @@ sealed trait Sequenced {
 	val sequence: Long
 }
 
-sealed trait DomainEvent extends Product with Serializable
-
-sealed trait Event extends DomainEvent with Sequenced with Identified with Product with Serializable
+sealed trait Event extends Sequenced with Identified with Product with Serializable
 
 object Event {
 	

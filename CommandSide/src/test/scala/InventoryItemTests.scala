@@ -22,7 +22,7 @@ object InventoryItemSpec extends Specification {
 
 	  		val event = InventoryItemCreated(id, "Test Inventory Item", 1)
 
-	  		val finalState = InventoryItem(event)
+	  		val finalState = InventoryItem.rehydrate(event)
 
   			finalState.id mustEqual id
 			finalState.name mustEqual "Test Inventory Item"
@@ -36,7 +36,7 @@ object InventoryItemSpec extends Specification {
 	  			InventoryItemCreated(id, "Test Inventory Item", 1)
   			)
 
-  			val finalState = InventoryItem(history)
+  			val finalState = InventoryItem.rehydrate(history)
 
   			finalState.version mustEqual 2
   			finalState.isActive mustEqual false
@@ -49,7 +49,7 @@ object InventoryItemSpec extends Specification {
 	  			InventoryItemCreated(id, "Test Inventory Item", 1)
   			)
 
-  			val finalState = InventoryItem(history)
+  			val finalState = InventoryItem.rehydrate(history)
 
   			finalState.version mustEqual 1
   			finalState.isActive mustEqual true
@@ -62,7 +62,7 @@ object InventoryItemSpec extends Specification {
 	  			InventoryItemCreated(id, "Test Inventory Item", 1)
   			)
 	  		
-	  		val finalState = InventoryItem(history)
+	  		val finalState = InventoryItem.rehydrate(history)
 
 			finalState.name mustEqual "New Iten Name"
 	  	}
@@ -77,7 +77,7 @@ object InventoryItemSpec extends Specification {
 	  			InventoryItemCreated(id, "Test Inventory Item", 1)
   			)
 	  		
-	  		val finalState = InventoryItem(history)
+	  		val finalState = InventoryItem.rehydrate(history)
 
 			finalState.itemsCount mustEqual 6
 	  	}
@@ -90,7 +90,7 @@ object InventoryItemSpec extends Specification {
 	  			InventoryItemCreated(id, "Test Inventory Item", 1)
   			)
 	  		
-	  		lazy val item = InventoryItem(history)
+	  		lazy val item = InventoryItem.rehydrate(history)
 
 	  		execTransition(item)(removeItemsFromInventory(2)).itemsCount mustEqual 18
 	  		execTransition(item)(removeItemsFromInventory(2)).version mustEqual 4
@@ -104,7 +104,7 @@ object InventoryItemSpec extends Specification {
 	  			InventoryItemCreated(id, "Test Inventory Item", 1)
   			)
 	  		
-	  		lazy val item = InventoryItem(history)
+	  		lazy val item = InventoryItem.rehydrate(history)
 
 	  		evalTransition(item)(removeItemsFromInventory(7)) match {
 	  			case ItemsRemovedFromInventory(i, c, s) :: Nil => {
@@ -124,7 +124,7 @@ object InventoryItemSpec extends Specification {
 	  			InventoryItemCreated(id, "Test Inventory Item", 1)
   			)
 	  		
-	  		lazy val item = InventoryItem(history)
+	  		lazy val item = InventoryItem.rehydrate(history)
 	  		lazy val transitions = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7))
 
 			evalTransitions(item)(transitions).head.sequence mustEqual 5
@@ -138,7 +138,7 @@ object InventoryItemSpec extends Specification {
 	  			InventoryItemCreated(id, "Test Inventory Item", 1)
   			)
 	  		
-	  		lazy val item = InventoryItem(history)
+	  		lazy val item = InventoryItem.rehydrate(history)
 	  		lazy val transitions = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7), checkInItemsToInventory(3))
 			
 			lazy val newTransition: StateTransition[InventoryItem] = mergeTransitions(transitions)
