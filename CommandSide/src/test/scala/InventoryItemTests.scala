@@ -92,8 +92,8 @@ object InventoryItemSpec extends Specification {
 	  		
 	  		lazy val item = InventoryItem.rehydrate(history)
 
-	  		execTransition(item)(removeItemsFromInventory(2)).itemsCount mustEqual 18
-	  		execTransition(item)(removeItemsFromInventory(2)).version mustEqual 4
+	  		execTransition(removeItemsFromInventory(2))(item).itemsCount mustEqual 18
+	  		execTransition(removeItemsFromInventory(2))(item).version mustEqual 4
 	  	}
 
 	  	"have the correct state after one command application" in {
@@ -106,7 +106,7 @@ object InventoryItemSpec extends Specification {
 	  		
 	  		lazy val item = InventoryItem.rehydrate(history)
 
-	  		evalTransition(item)(removeItemsFromInventory(7)) match {
+	  		evalTransition(removeItemsFromInventory(7))(item) match {
 	  			case ItemsRemovedFromInventory(i, c, s) :: Nil => {
 					i mustEqual id
 					c mustEqual 7
@@ -127,7 +127,7 @@ object InventoryItemSpec extends Specification {
 	  		lazy val item = InventoryItem.rehydrate(history)
 	  		lazy val transitions = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7))
 
-			evalTransitions(item)(transitions).head.sequence mustEqual 5
+			evalTransitions(transitions)(item).head.sequence mustEqual 5
 	  	}
 
 	  	"have the correct state after commands application" in {
@@ -143,8 +143,8 @@ object InventoryItemSpec extends Specification {
 			
 			lazy val newTransition: StateTransition[InventoryItem] = mergeTransitions(transitions)
 
-	  		execTransition(item)(newTransition).itemsCount mustEqual 14
-	  		execTransition(item)(newTransition).version mustEqual 6
+	  		execTransition(newTransition)(item).itemsCount mustEqual 14
+	  		execTransition(newTransition)(item).version mustEqual 6
 	  	}
 	}
 }

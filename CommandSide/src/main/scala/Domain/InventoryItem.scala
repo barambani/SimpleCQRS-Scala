@@ -27,14 +27,21 @@ object InventoryItem {
 		i => count => i.itemsCount >= count
 
 	//	Commands
-	lazy val createFor: UUID => String => Throwable \/ StateTransition[InventoryItem] =
+	// lazy val createFor: UUID => String => Throwable \/ StateTransition[InventoryItem] =
+	// 	id => name => 
+	// 		if(theNameIsValid(name)) 
+	// 			\/-(
+	// 				newStateTransition(_ => InventoryItemCreated(id, name, 1) :: Nil)
+	// 			)
+	// 		else 
+	// 			-\/(new Exception)
+
+	lazy val createFor: UUID => String => StateTransition[InventoryItem] =
 		id => name => 
-			if(theNameIsValid(name)) 
-				\/-(
-					newStateTransition(_ => InventoryItemCreated(id, name, 1) :: Nil)
-				)
-			else 
-				-\/(new Exception)
+			newStateTransition(
+				item => if(theNameIsValid(name)) InventoryItemCreated(id, name, 1) :: Nil
+						else Nil //	Error, cannot create the item 
+			)
 
 	lazy val deactivateInventoryItem: () => StateTransition[InventoryItem] = 
 		() => newStateTransition(item => InventoryItemDeactivated(item.id, item.expectedNextVersion) :: Nil)

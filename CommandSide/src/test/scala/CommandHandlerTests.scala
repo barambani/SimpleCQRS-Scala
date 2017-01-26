@@ -20,7 +20,7 @@ object CommandHandlerSpec extends Specification {
 	)
 	
 	lazy val eventStoreRepository: Identified => List[Event] = _ => history
-	lazy val handleWithSideEffect: Command => List[Event] = CommandHandler.handle(eventStoreRepository) _
+	lazy val handleWithSideEffect: Command => List[Event] = CommandHandler.handleOne(eventStoreRepository) _
 
 	"The Command Handler" should {
 

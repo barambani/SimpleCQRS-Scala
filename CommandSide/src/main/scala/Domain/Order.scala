@@ -43,6 +43,11 @@ object Order {
 	def rehydrate(history: List[Event]): Order = evolve(new Order)(history)
 
 	//	Commands
+	lazy val createFor: UUID => String => StateTransition[Order] =
+		id => descr => newStateTransition(
+			ord => OrderCreated(id, descr, 1) :: Nil
+		)
+
 	lazy val addInventoryItemToOrder: UUID => Int => StateTransition[Order] =
 		inventoryItemId => quantity => 
 			newStateTransition(

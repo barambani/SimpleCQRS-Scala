@@ -2,6 +2,7 @@ package SimpleCqrsScala.CommandSide.Domain
 
 import SimpleCqrsScala.CommandSide._
 
+
 import scalaz._
 
 object DomainState {
@@ -24,9 +25,15 @@ object DomainState {
 		(transitions foldRight unitTransition[A]) ((t,curr) => mergeSingleTransition(t, curr))
 	}
 
-	def execTransition[A]: A => StateTransition[A] => A = st => tr => tr.exec(st)
-	def evalTransition[A]: A => StateTransition[A] => List[Event] = st => tr => tr.eval(st)
+	def execTransition[A]: StateTransition[A] => A => A =
+		tr => st => tr.exec(st)
 
-	def execTransitions[A]: A => Seq[StateTransition[A]] => A = st => trns => mergeTransitions(trns) exec st
-	def evalTransitions[A]: A => Seq[StateTransition[A]] => List[Event] = st => trns => mergeTransitions(trns) eval st
+	def evalTransition[A]: StateTransition[A] => A => List[Event] = 
+		tr => st => tr.eval(st)
+
+	def execTransitions[A]: Seq[StateTransition[A]] => A => A = 
+		trns => st => mergeTransitions(trns) exec st
+
+	def evalTransitions[A]: Seq[StateTransition[A]] => A => List[Event] = 
+		trns => st => mergeTransitions(trns) eval st
 }
