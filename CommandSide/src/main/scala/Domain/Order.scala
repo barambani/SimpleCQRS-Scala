@@ -18,48 +18,69 @@ final case object AllItemsAvailable extends OrderStatus
 final case object Dispatched extends OrderStatus
 final case object Voided extends OrderStatus
 
-@Lenses case class Order private[Order] (
-	id: UUID = new UUID(0, 0),
-	description: String = "",
-	shippingAddress: String = "",
-	isPayed: Boolean = false,
-	items: OrderItems = OrderItems.empty,
-	status: OrderStatus = Open,
-	version: Long = 0) extends Identity with Versioned {
-
-	//	Domain logic
-	lazy val canBeChanged: Boolean = status == Open
-	lazy val theShippingAddressIsValid: Boolean = !shippingAddress.isEmpty
-	lazy val canBePayed: Boolean = !isPayed
-	lazy val canBeSubmitted: Boolean = isPayed && theShippingAddressIsValid
-	lazy val canBeDispatched: Boolean = status == AllItemsAvailable && isPayed && theShippingAddressIsValid
-	lazy val canBeVoided: Boolean = status != Dispatched
-}
+@Lenses final case class Order private (
+	id: UUID,
+	description: String,
+	shippingAddress: String,
+	isPayed: Boolean,
+	items: OrderItems,
+	status: OrderStatus,
+	version: Long) extends Identity with Versioned
 
 object Order {
+
+	private lazy val empty = Order(
+		id = new UUID(0, 0),
+		description = "",
+		shippingAddress = "",
+		isPayed = false,
+		items = OrderItems.empty,
+		status = Open,
+		version = 0
+	)
 	
-	//	Factories
 	def rehydrate(history: Event*): Order = rehydrate(history.toList)
-	def rehydrate(history: List[Event]): Order = evolve(new Order)(history)
+	def rehydrate(history: List[Event]): Order = evolve(empty)(history)
+
+	//	Validation
+	private lazy val canBeChanged: Order => Boolean = 
+		ord => ord.status == Open
+
+	private lazy val theShippingAddressIsValid: Order => Boolean = 
+		ord => !ord.shippingAddress.isEmpty
+
+	private lazy val canBePayed: Order => Boolean = 
+		ord => !ord.isPayed
+
+	private lazy val canBeSubmitted: Order => Boolean = 
+		ord => ord.isPayed && theShippingAddressIsValid(ord)
+
+	private lazy val canBeDispatched: Order => Boolean = 
+		ord => (
+			ord.status == AllItemsAvailable 
+			&& ord.isPayed 
+			&& theShippingAddressIsValid(ord)
+		)
+
+	private lazy val canBeVoided: Order => Boolean = 
+		ord => ord.status != Dispatched
 
 	//	Commands
 	lazy val createFor: UUID => String => StateTransition[Order] =
-		id => descr => newStateTransition(
-			ord => OrderCreated(id, descr, 1) :: Nil
-		)
+		id => descr => newStateTransition(_ => OrderCreated(id, descr, 1) :: Nil)
 
 	lazy val addInventoryItemToOrder: UUID => Int => StateTransition[Order] =
 		inventoryItemId => quantity => 
 			newStateTransition(
-				ord =>	if(ord.canBeChanged) InventoryItemAddedToOrder(ord.id, inventoryItemId, quantity, ord.expectedNextVersion) :: Nil
-						else Nil // TODO: Error, cannot be changed
+				ord => if(canBeChanged(ord)) InventoryItemAddedToOrder(ord.id, inventoryItemId, quantity, ord.expectedNextVersion) :: Nil
+					   else Nil // TODO: Error, cannot be changed
 			)
 
 	lazy val removeInventoryItemFromOrder: UUID => Int => StateTransition[Order] = 
 		inventoryItemId => quantity => 
 			newStateTransition(
-				ord =>	if(ord.canBeChanged)
-							if(canRemoveTheItem(ord.items, inventoryItemId, quantity)) 
+				ord =>	if(canBeChanged(ord))
+							if(canRemoveTheItem(ord.items)(inventoryItemId)(quantity))
 								InventoryItemRemovedFromOrder(ord.id, inventoryItemId, quantity, ord.expectedNextVersion) :: Nil
 							else
 								Nil // TODO: Error, not enough items to remove
@@ -69,19 +90,19 @@ object Order {
 
 	lazy val addShippingAddressToOrder: String => StateTransition[Order] =
 		shippingAddress => newStateTransition(
-			ord =>	if(ord.canBeChanged) ShippingAddressAddedToOrder(ord.id, shippingAddress, ord.expectedNextVersion) :: Nil
+			ord =>	if(canBeChanged(ord)) ShippingAddressAddedToOrder(ord.id, shippingAddress, ord.expectedNextVersion) :: Nil
 					else Nil // TODO: Error, cannot be changed
 		)
 
-	lazy val payTheBalance: () => StateTransition[Order] = 
-		() => newStateTransition(
-			ord => 	if(ord.canBePayed) OrderPayed(ord.id, ord.expectedNextVersion) :: Nil
+	lazy val payTheBalance: StateTransition[Order] = 
+		newStateTransition(
+			ord => 	if(canBePayed(ord)) OrderPayed(ord.id, ord.expectedNextVersion) :: Nil
 					else Nil // TODO: Error, cannot be payed twice
 		)
 
-	lazy val submit: () => StateTransition[Order] = 
-		() => newStateTransition(
-			ord => 	if(ord.canBeSubmitted) OrderSubmitted(ord.id, ord.expectedNextVersion) :: Nil
+	lazy val submit: StateTransition[Order] = 
+		newStateTransition(
+			ord => 	if(canBeSubmitted(ord)) OrderSubmitted(ord.id, ord.expectedNextVersion) :: Nil
 					else Nil // TODO: Error, the order cannot be submitted
 		)
 
@@ -92,16 +113,16 @@ object Order {
 			else if(!isInSequence(event)(aggregate)) aggregate // TODO: Error in this case
 			else event match {
 				case OrderCreated(newId, description, sequence) => 
-					new Order(id = newId, description = description, version = sequence)
+					Order(newId, description, "", isPayed = false, OrderItems.empty, Open, sequence)
 
 				case InventoryItemAddedToOrder(_, inventoryItemId, quantity, sequence) => 
-					withItems(addToItems(aggregate.items, inventoryItemId, quantity))(sequence)(aggregate)
+					itemsAddition(addToItems(aggregate.items)(inventoryItemId)(quantity))(sequence)(aggregate)
 					
 				case InventoryItemRemovedFromOrder(_, inventoryItemId, quantity, sequence) => 
-					withItems(removeFromItems(aggregate.items, inventoryItemId, quantity))(sequence)(aggregate)
+					itemsAddition(removeFromItems(aggregate.items)(inventoryItemId)(quantity))(sequence)(aggregate)
 					
 				case ShippingAddressAddedToOrder(_, shippingAddress, sequence) => 
-					withAddress(shippingAddress)(sequence)(aggregate)
+					applyAddress(shippingAddress)(sequence)(aggregate)
 
 				case OrderPayed(_, sequence) =>
 					afterPayed(sequence)(aggregate)
@@ -113,7 +134,7 @@ object Order {
 			}
 
 	//	Lenses
-	private lazy val withAddress: String => Long => Order => Order =
+	private lazy val applyAddress: String => Long => Order => Order =
 		addr => ver => Order.version.set(ver) compose Order.shippingAddress.set(addr)
 
 	private lazy val afterPayed: Long => Order => Order =
@@ -122,6 +143,6 @@ object Order {
 	private lazy val afterSubmitted: Long => Order => Order =
 		ver => Order.version.set(ver) compose Order.status.set(Submitted)
 
-	private lazy val withItems: OrderItems => Long => Order => Order =
+	private lazy val itemsAddition: OrderItems => Long => Order => Order =
 		is => ver => Order.version.set(ver) compose Order.items.set(is)
 }

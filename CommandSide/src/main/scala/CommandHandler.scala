@@ -19,7 +19,7 @@ object CommandHandler {
 	import InventoryItem._
 	private def tryApplyToInventoryItem: PartialFunction[Command, StateTransition[InventoryItem]] = {
 		case CreateInventoryItem(id, name) 		=> InventoryItem.createFor(id)(name)
-		case DeactivateInventoryItem(_) 		=> deactivateInventoryItem()
+		case DeactivateInventoryItem(_) 		=> deactivateInventoryItem
 		case RenameInventoryItem(_, newName) 	=> renameInventoryItem(newName)
 		case CheckInItemsToInventory(_, count)	=> checkInItemsToInventory(count)
 		case RemoveItemsFromInventory(_, count)	=> removeItemsFromInventory(count)
@@ -31,8 +31,8 @@ object CommandHandler {
 		case AddInventoryItemToOrder(_, inventoryItemId, quantity) 		=> addInventoryItemToOrder(inventoryItemId)(quantity)
 		case RemoveInventoryItemFromOrder(_, inventoryItemId, quantity)	=> removeInventoryItemFromOrder(inventoryItemId)(quantity)
 		case AddShippingAddressToOrder(_, shippingAddress)				=> addShippingAddressToOrder(shippingAddress)
-		case PayForTheOrder(_) 											=> payTheBalance()
-		case SubmitTheOrder(_)											=> submit()
+		case PayForTheOrder(_) 											=> payTheBalance
+		case SubmitTheOrder(_)											=> submit
 	}
 
 	private def eventEmissionForTransition[A : Aggregate](stateTransition: StateTransition[A]): List[Event] => List[Event] =
