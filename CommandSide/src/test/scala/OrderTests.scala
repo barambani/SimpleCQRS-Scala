@@ -1,15 +1,11 @@
 package SimpleCqrsScala.CommandSide.Test
 
 import org.specs2.mutable._
-import SimpleCqrsScala.CommandSide._
 import SimpleCqrsScala.CommandSide.Domain._
 
 import java.util.UUID
 
 object OrderSpec extends Specification {
-
-	import AggregateRoot._
-	import DomainState._
 
 	val orderId = UUID.randomUUID
 	val inventoryItemId1 = UUID.randomUUID

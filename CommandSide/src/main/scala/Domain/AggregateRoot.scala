@@ -2,6 +2,7 @@ package SimpleCqrsScala.CommandSide.Domain
 
 import java.util.UUID
 import SimpleCqrsScala.CommandSide._
+import scala.annotation._
 
 import scalaz._
 
@@ -35,10 +36,12 @@ object AggregateRoot {
 
 	import DomainState._
 
-	def evolve[A: Aggregate](aState: A)(withHistory: List[Event])(implicit AGG: Aggregate[A]): A =
+	@implicitNotFound("implicit not found for Aggregate[{A}]")
+	def evolve[A](aState: A)(withHistory: List[Event])(implicit AGG: Aggregate[A]): A =
 		withHistory.foldRight(aState){ (e, s) => AGG.newState(s)(e) }
 
-	def rehydrated[A: Aggregate](history: List[Event])(implicit AGG: Aggregate[A]): A = AGG.rehydrate(history)
+	@implicitNotFound("implicit not found for Aggregate[{A}]")
+	def rehydrated[A](history: List[Event])(implicit AGG: Aggregate[A]): A = AGG.rehydrate(history)
 
 	def newStateTransition[A: Aggregate](commandExecution: CommandExecution[A]): StateTransition[A] = 
 		for {

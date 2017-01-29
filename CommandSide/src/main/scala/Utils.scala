@@ -1,7 +1,10 @@
 package SimpleCqrsScala.CommandSide
 
+import scala.annotation.implicitNotFound
+
 object Printer {
-	def print[A : Show](x: A): String = implicitly[Show[A]] stringFor x
+	@implicitNotFound("implicit not found for Show[{A}]")
+	def print[A](x: A)(implicit SH: Show[A]): String = SH stringFor x
 }
 
 object MapOps {

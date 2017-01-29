@@ -1,11 +1,13 @@
 package SimpleCqrsScala.CommandSide.Domain
 
 import java.util.UUID
-import SimpleCqrsScala.CommandSide._
 import SimpleCqrsScala.CommandSide.Domain.DomainState._
 import monocle.macros.Lenses
 import scala.language.higherKinds
 import OrderItems._
+
+import monocle.Lens
+import monocle.macros.GenLens
 
 import AggregateRoot._
 import Event._
@@ -112,7 +114,7 @@ object Order {
 			if(!hasACorrectId(event)(aggregate)) aggregate // TODO: Error in this case
 			else if(!isInSequence(event)(aggregate)) aggregate // TODO: Error in this case
 			else event match {
-				case OrderCreated(newId, description, sequence) => 
+				case OrderCreated(newId, description, sequence) =>
 					Order(newId, description, "", isPayed = false, OrderItems.empty, Open, sequence)
 
 				case InventoryItemAddedToOrder(_, inventoryItemId, quantity, sequence) => 
@@ -145,4 +147,6 @@ object Order {
 
 	private lazy val itemsAddition: OrderItems => Long => Order => Order =
 		is => ver => Order.version.set(ver) compose Order.items.set(is)
+
+	//private lazy val aaaa: Order.items composeLens 
 }
