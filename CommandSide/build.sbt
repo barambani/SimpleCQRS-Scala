@@ -11,7 +11,7 @@ lazy val commandSide = (project in file(".")).settings(prjcSettings: _*)
 resolvers += Resolver.sonatypeRepo("releases")
 resolvers += Resolver.sonatypeRepo("snapshots")
 
-val monocleVersion = "1.2.2"
+val monocleVersion = "1.4.0"
 
 libraryDependencies ++= Seq(
 	"org.scalaz" %% "scalaz-core" % "7.2.5",

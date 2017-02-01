@@ -42,11 +42,10 @@ object InventoryItem {
 	// 			-\/(new Exception)
 
 	lazy val createFor: UUID => String => StateTransition[InventoryItem] =
-		id => name => 
-			newStateTransition(
-				_ => if(theNameIsValid(name)) InventoryItemCreated(id, name, 1) :: Nil
-					 else Nil //	Error, cannot create the item 
-			)
+		id => name => newStateTransition(
+			_ => if(theNameIsValid(name)) InventoryItemCreated(id, name, 1) :: Nil
+				 else Nil //	Error, cannot create the item 
+		)
 
 	lazy val deactivateInventoryItem: StateTransition[InventoryItem] = 
 		newStateTransition(item => InventoryItemDeactivated(item.id, item.expectedNextVersion) :: Nil)

@@ -4,13 +4,21 @@ import java.util.UUID
 import SimpleCqrsScala.CommandSide.Domain.DomainState._
 import monocle.macros.Lenses
 import scala.language.higherKinds
-import OrderItems._
 
-import monocle.Lens
+import monocle.{Lens, Optional}
 import monocle.macros.GenLens
+import monocle.function.all.at
+import monocle.std.map._
+import scalaz.Scalaz._
 
 import AggregateRoot._
 import Event._
+import OrderItems._
+
+object OrderItems {	
+	type OrderItems = Map[UUID, Int]
+	lazy val empty: OrderItems = Map.empty
+}
 
 sealed trait OrderStatus extends Product with Serializable
 final case object Open extends OrderStatus
@@ -45,6 +53,9 @@ object Order {
 	def rehydrate(history: List[Event]): Order = evolve(empty)(history)
 
 	//	Validation
+	private lazy val canRemoveTheItem: Order => UUID => Int => Boolean = 
+		ord => itemId => quantity => (ord.items get itemId).fold(false){ _ >= quantity }
+
 	private lazy val canBeChanged: Order => Boolean = 
 		ord => ord.status == Open
 
@@ -82,7 +93,7 @@ object Order {
 		inventoryItemId => quantity => 
 			newStateTransition(
 				ord =>	if(canBeChanged(ord))
-							if(canRemoveTheItem(ord.items)(inventoryItemId)(quantity))
+							if(canRemoveTheItem(ord)(inventoryItemId)(quantity))
 								InventoryItemRemovedFromOrder(ord.id, inventoryItemId, quantity, ord.expectedNextVersion) :: Nil
 							else
 								Nil // TODO: Error, not enough items to remove
@@ -118,10 +129,10 @@ object Order {
 					Order(newId, description, "", isPayed = false, OrderItems.empty, Open, sequence)
 
 				case InventoryItemAddedToOrder(_, inventoryItemId, quantity, sequence) => 
-					itemsAddition(addToItems(aggregate.items)(inventoryItemId)(quantity))(sequence)(aggregate)
+					addItems(inventoryItemId)(quantity)(sequence)(aggregate)
 					
 				case InventoryItemRemovedFromOrder(_, inventoryItemId, quantity, sequence) => 
-					itemsAddition(removeFromItems(aggregate.items)(inventoryItemId)(quantity))(sequence)(aggregate)
+					removeItems(inventoryItemId)(quantity)(sequence)(aggregate)
 					
 				case ShippingAddressAddedToOrder(_, shippingAddress, sequence) => 
 					applyAddress(shippingAddress)(sequence)(aggregate)
@@ -145,8 +156,15 @@ object Order {
 	private lazy val afterSubmitted: Long => Order => Order =
 		ver => Order.version.set(ver) compose Order.status.set(Submitted)
 
-	private lazy val itemsAddition: OrderItems => Long => Order => Order =
-		is => ver => Order.version.set(ver) compose Order.items.set(is)
+	private lazy val addItems: UUID => Int => Long => Order => Order =
+		itemId => count => ver => Order.version.set(ver) compose atItemEvaluate(itemId)(_ + count)
 
-	//private lazy val aaaa: Order.items composeLens 
+	private lazy val removeItems: UUID => Int => Long => Order => Order =
+		itemId => count => ver => Order.version.set(ver) compose atItemEvaluate(itemId)(_ - count)
+
+	private lazy val atItemEvaluate: UUID => (Int => Int) => Order => Order =
+		itemId => f => atItem(itemId) modify (prev => f(prev getOrElse 0).some)
+
+	private lazy val atItem: UUID => Lens[Order, Option[Int]] =
+		itemId => Order.items composeLens at(itemId)
 }
