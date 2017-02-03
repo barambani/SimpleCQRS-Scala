@@ -19,17 +19,9 @@ object InventoryItem {
 	import Event._
 	import AggregateRoot._
 
-	private lazy val empty = InventoryItem(id = new UUID(0, 0), name = "", isActive = false, itemsCount = 0, version = 0)
-
 	def rehydrate(history: Event*): InventoryItem = rehydrate(history.toList)
 	def rehydrate(history: List[Event]): InventoryItem = evolve(empty)(history)
 
-	//	Validation
-	private lazy val theNameIsValid: String => Boolean = 
-		n => !n.isEmpty
-
-	private lazy val itemsAreAvailableInStock: InventoryItem => Int => Boolean = 
-		i => count => i.itemsCount >= count
 
 	//	Commands
 	// lazy val createFor: UUID => String => Throwable \/ StateTransition[InventoryItem] =
@@ -88,6 +80,15 @@ object InventoryItem {
 				
 				case _ => aggregate // TODO: log event ignored with event details
 			}
+
+	private lazy val empty = InventoryItem(id = new UUID(0, 0), name = "", isActive = false, itemsCount = 0, version = 0)
+
+	//	Validation
+	private lazy val theNameIsValid: String => Boolean = 
+		n => !n.isEmpty
+
+	private lazy val itemsAreAvailableInStock: InventoryItem => Int => Boolean = 
+		i => count => i.itemsCount >= count
 
 	//	Lenses
 	private lazy val applyName: String => Long => InventoryItem => InventoryItem =

@@ -11,8 +11,6 @@ import monocle.function.all.at
 import monocle.std.map._
 import scalaz.Scalaz._
 
-import AggregateRoot._
-import Event._
 import OrderItems._
 
 object OrderItems {	
@@ -39,44 +37,11 @@ final case object Voided extends OrderStatus
 
 object Order {
 
-	private lazy val empty = Order(
-		id = new UUID(0, 0),
-		description = "",
-		shippingAddress = "",
-		isPayed = false,
-		items = OrderItems.empty,
-		status = Open,
-		version = 0
-	)
+	import Event._
+	import AggregateRoot._
 	
 	def rehydrate(history: Event*): Order = rehydrate(history.toList)
 	def rehydrate(history: List[Event]): Order = evolve(empty)(history)
-
-	//	Validation
-	private lazy val canRemoveTheItem: Order => UUID => Int => Boolean = 
-		ord => itemId => quantity => (ord.items get itemId).fold(false){ _ >= quantity }
-
-	private lazy val canBeChanged: Order => Boolean = 
-		ord => ord.status == Open
-
-	private lazy val theShippingAddressIsValid: Order => Boolean = 
-		ord => !ord.shippingAddress.isEmpty
-
-	private lazy val canBePayed: Order => Boolean = 
-		ord => !ord.isPayed
-
-	private lazy val canBeSubmitted: Order => Boolean = 
-		ord => ord.isPayed && theShippingAddressIsValid(ord)
-
-	private lazy val canBeDispatched: Order => Boolean = 
-		ord => (
-			ord.status == AllItemsAvailable 
-			&& ord.isPayed 
-			&& theShippingAddressIsValid(ord)
-		)
-
-	private lazy val canBeVoided: Order => Boolean = 
-		ord => ord.status != Dispatched
 
 	//	Commands
 	lazy val createFor: UUID => String => StateTransition[Order] =
@@ -145,6 +110,42 @@ object Order {
 				
 				case _ => aggregate // TODO: log event ignored with event details
 			}
+
+	private lazy val empty = Order(
+		id = new UUID(0, 0),
+		description = "",
+		shippingAddress = "",
+		isPayed = false,
+		items = OrderItems.empty,
+		status = Open,
+		version = 0
+	)
+
+	//	Validation
+	private lazy val canRemoveTheItem: Order => UUID => Int => Boolean = 
+		ord => itemId => quantity => (ord.items get itemId).fold(false){ _ >= quantity }
+
+	private lazy val canBeChanged: Order => Boolean = 
+		ord => ord.status == Open
+
+	private lazy val theShippingAddressIsValid: Order => Boolean = 
+		ord => !ord.shippingAddress.isEmpty
+
+	private lazy val canBePayed: Order => Boolean = 
+		ord => !ord.isPayed
+
+	private lazy val canBeSubmitted: Order => Boolean = 
+		ord => ord.isPayed && theShippingAddressIsValid(ord)
+
+	private lazy val canBeDispatched: Order => Boolean = 
+		ord => (
+			ord.status == AllItemsAvailable 
+			&& ord.isPayed 
+			&& theShippingAddressIsValid(ord)
+		)
+
+	private lazy val canBeVoided: Order => Boolean = 
+		ord => ord.status != Dispatched
 
 	//	Lenses
 	private lazy val applyAddress: String => Long => Order => Order =
