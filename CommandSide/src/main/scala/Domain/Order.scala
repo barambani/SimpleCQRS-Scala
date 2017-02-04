@@ -44,45 +44,38 @@ object Order {
 	def rehydrate(history: List[Event]): Order = evolve(empty)(history)
 
 	//	Commands
-	lazy val createFor: UUID => String => StateTransition[Order] =
-		id => descr => newStateTransition(_ => OrderCreated(id, descr, 1) :: Nil)
+	lazy val createFor: UUID => String => EitherTransition[Order] =
+		id => descr => newTransition(_ => OrderCreated(id, descr, 1) :: Nil)
 
-	lazy val addInventoryItemToOrder: UUID => Int => StateTransition[Order] =
-		inventoryItemId => quantity => 
-			newStateTransition(
-				ord => if(canBeChanged(ord)) InventoryItemAddedToOrder(ord.id, inventoryItemId, quantity, ord.expectedNextVersion) :: Nil
-					   else Nil // TODO: Error, cannot be changed
-			)
+	lazy val addInventoryItemToOrder: UUID => Int => Order => EitherTransition[Order] =
+		itemId => quantity => ord =>
+			if(!canBeChanged(ord))	failedTransition(OrderClosed(ord.id, ord.description))
+			else 					newTransition(o => InventoryItemAddedToOrder(o.id, itemId, quantity, o.expectedNextVersion) :: Nil)
 
-	lazy val removeInventoryItemFromOrder: UUID => Int => StateTransition[Order] = 
-		inventoryItemId => quantity => 
-			newStateTransition(
-				ord =>	if(canBeChanged(ord))
-							if(canRemoveTheItem(ord)(inventoryItemId)(quantity))
-								InventoryItemRemovedFromOrder(ord.id, inventoryItemId, quantity, ord.expectedNextVersion) :: Nil
-							else
-								Nil // TODO: Error, not enough items to remove
-						else
-							Nil // TODO: Error, cannot be changed
-			)
+	lazy val removeInventoryItemFromOrder: UUID => Int => Order => EitherTransition[Order] = 
+		itemId => quantity => ord => 
+			if(!canBeChanged(ord)) 						failedTransition(OrderClosed(ord.id, ord.description))
+			else if(!hasEnough(itemId)(quantity)(ord))	failedTransition(NotEnoughItemsInTheOrder(ord.id, ord.description, itemId, quantity))
+			else 												
+				newTransition(o => InventoryItemRemovedFromOrder(o.id, itemId, quantity, o.expectedNextVersion) :: Nil)
 
-	lazy val addShippingAddressToOrder: String => StateTransition[Order] =
-		shippingAddress => newStateTransition(
-			ord =>	if(canBeChanged(ord)) ShippingAddressAddedToOrder(ord.id, shippingAddress, ord.expectedNextVersion) :: Nil
-					else Nil // TODO: Error, cannot be changed
-		)
+	lazy val addShippingAddressToOrder: String => Order => EitherTransition[Order] =
+		address => ord => 
+			if(!canBeChanged(ord)) 					failedTransition(OrderClosed(ord.id, ord.description))
+			else if(!shippingAddressValid(address))	failedTransition(ShippingAddressNotValid(ord.id, ord.description, address))
+			else 									newTransition(o => ShippingAddressAddedToOrder(ord.id, address, ord.expectedNextVersion) :: Nil)
 
-	lazy val payTheBalance: StateTransition[Order] = 
-		newStateTransition(
-			ord => 	if(canBePayed(ord)) OrderPayed(ord.id, ord.expectedNextVersion) :: Nil
-					else Nil // TODO: Error, cannot be payed twice
-		)
+	lazy val payTheBalance: Order => EitherTransition[Order] =
+		ord =>
+			if(!canBeChanged(ord)) 		failedTransition(OrderClosed(ord.id, ord.description))
+			else if(!canBePayed(ord))	failedTransition(OrderAlreadyPayed(ord.id, ord.description))
+			else 						newTransition(o => OrderPayed(o.id, o.expectedNextVersion) :: Nil)
 
-	lazy val submit: StateTransition[Order] = 
-		newStateTransition(
-			ord => 	if(canBeSubmitted(ord)) OrderSubmitted(ord.id, ord.expectedNextVersion) :: Nil
-					else Nil // TODO: Error, the order cannot be submitted
-		)
+	lazy val submit: Order => EitherTransition[Order] = 
+		ord =>
+			if(!canBeChanged(ord)) 			failedTransition(OrderClosed(ord.id, ord.description))
+			else if(!canBeSubmitted(ord))	failedTransition(OrderNotComplete(ord.id, ord.description))
+			else 							newTransition(o => OrderSubmitted(o.id, o.expectedNextVersion) :: Nil)
 
 	//	Aggregate Evolution
 	lazy val newState: Order => Event => Order = 
@@ -93,11 +86,11 @@ object Order {
 				case OrderCreated(newId, description, sequence) =>
 					Order(newId, description, "", isPayed = false, OrderItems.empty, Open, sequence)
 
-				case InventoryItemAddedToOrder(_, inventoryItemId, quantity, sequence) => 
-					addItems(inventoryItemId)(quantity)(sequence)(aggregate)
+				case InventoryItemAddedToOrder(_, itemId, quantity, sequence) => 
+					addItems(itemId)(quantity)(sequence)(aggregate)
 					
-				case InventoryItemRemovedFromOrder(_, inventoryItemId, quantity, sequence) => 
-					removeItems(inventoryItemId)(quantity)(sequence)(aggregate)
+				case InventoryItemRemovedFromOrder(_, itemId, quantity, sequence) => 
+					removeItems(itemId)(quantity)(sequence)(aggregate)
 					
 				case ShippingAddressAddedToOrder(_, shippingAddress, sequence) => 
 					applyAddress(shippingAddress)(sequence)(aggregate)
@@ -122,26 +115,26 @@ object Order {
 	)
 
 	//	Validation
-	private lazy val canRemoveTheItem: Order => UUID => Int => Boolean = 
-		ord => itemId => quantity => (ord.items get itemId).fold(false){ _ >= quantity }
+	private lazy val hasEnough: UUID => Int => Order => Boolean = 
+		itemId => quantity => ord => (ord.items get itemId).fold(false){ _ >= quantity }
 
 	private lazy val canBeChanged: Order => Boolean = 
 		ord => ord.status == Open
 
-	private lazy val theShippingAddressIsValid: Order => Boolean = 
-		ord => !ord.shippingAddress.isEmpty
+	private lazy val shippingAddressValid: String => Boolean = 
+		shippingAddress => !shippingAddress.isEmpty
 
 	private lazy val canBePayed: Order => Boolean = 
 		ord => !ord.isPayed
 
 	private lazy val canBeSubmitted: Order => Boolean = 
-		ord => ord.isPayed && theShippingAddressIsValid(ord)
+		ord => ord.isPayed && shippingAddressValid(ord.shippingAddress)
 
 	private lazy val canBeDispatched: Order => Boolean = 
 		ord => (
 			ord.status == AllItemsAvailable 
 			&& ord.isPayed 
-			&& theShippingAddressIsValid(ord)
+			&& shippingAddressValid(ord.shippingAddress)
 		)
 
 	private lazy val canBeVoided: Order => Boolean = 

@@ -3,6 +3,7 @@ package SimpleCqrsScala.CommandSide.Domain
 import java.util.UUID
 import SimpleCqrsScala.CommandSide._
 import scala.annotation._
+import scalaz.Semigroup
 
 import scalaz._
 
@@ -19,6 +20,7 @@ trait Aggregate[A] {
 	val newState: A => Event => A
 	val rehydrate: List[Event] => A
 }
+
 object Aggregate {
 
 	implicit object InventoryItemAggregate extends Aggregate[InventoryItem] {
@@ -42,10 +44,4 @@ object AggregateRoot {
 
 	@implicitNotFound("implicit not found for Aggregate[{A}]")
 	def rehydrated[A](history: List[Event])(implicit AGG: Aggregate[A]): A = AGG.rehydrate(history)
-
-	def newStateTransition[A: Aggregate](commandExecution: CommandExecution[A]): StateTransition[A] = 
-		for {
-			es 	<- State.gets(commandExecution)
-			_ 	<- State.modify { s: A => evolve(s)(es) }
-		} yield es
 }

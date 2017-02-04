@@ -1,16 +1,30 @@
 package SimpleCqrsScala.CommandSide.Domain
 
 import SimpleCqrsScala.CommandSide._
+import scalaz.StateT
+import scalaz.EitherT
+import scalaz.State
+import scalaz.\/
 
-
-import scalaz._
+import AggregateRoot._
 
 object DomainState {
 
-	type StateTransition[A]	= State[A, List[Event]]
+	type StateTransition[A] = State[A, List[Event]]
+
+	type EitherTransition[A] = EitherT[StateTransition, ErrorMessage, A]
+
 	type CommandExecution[A] = A => List[Event]
 
-	def unitTransition[A] = State.state[A, List[Event]](Nil)
+	def zeroTransition[A] = State.state[A, List[Event]](Nil)
+
+	def newTransition[A : Aggregate](ce: CommandExecution[A]): EitherTransition[A] = ???
+		// for {
+		// 	es 	<- State gets ce 
+		// 	_ 	<- State modify { s: A => evolve(s)(es) }
+		// } yield es
+
+	def failedTransition[A : Aggregate](e: ErrorMessage): EitherTransition[A] = ???
 	
 	def mergeTransitions[A](transitions: Seq[StateTransition[A]]): StateTransition[A] = {
 
@@ -22,7 +36,7 @@ object DomainState {
 			}
 		}
 
-		(transitions foldRight unitTransition[A]) ((t,curr) => mergeSingleTransition(t, curr))
+		(transitions foldRight zeroTransition[A]) ((t,curr) => mergeSingleTransition(t, curr))
 	}
 
 	def execTransition[A]: StateTransition[A] => A => A =
