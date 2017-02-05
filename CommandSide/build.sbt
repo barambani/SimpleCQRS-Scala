@@ -1,7 +1,7 @@
 import sbt._
 
 lazy val prjcSettings = Seq (
-	scalaVersion := "2.11.8",
+	scalaVersion := "2.12.1",
 	version := "0.0.1",
 	name := "CommandSide"
 )
@@ -14,7 +14,7 @@ resolvers += Resolver.sonatypeRepo("snapshots")
 val monocleVersion = "1.4.0"
 
 libraryDependencies ++= Seq(
-	"org.scalaz" %% "scalaz-core" % "7.2.5",
+	"org.scalaz" %% "scalaz-core" % "7.2.8",
 
     "com.github.julien-truffaut"  %%  "monocle-core"    % monocleVersion,
   	"com.github.julien-truffaut"  %%  "monocle-generic" % monocleVersion,
@@ -23,7 +23,7 @@ libraryDependencies ++= Seq(
   	"com.github.julien-truffaut"  %%  "monocle-refined" % monocleVersion,
 	"com.github.julien-truffaut"  %%  "monocle-law"     % monocleVersion % "test",
 
-	"org.specs2" %% "specs2-core" % "3.8.4" % "test"
+	"org.specs2" %% "specs2-core" % "3.8.6" % "test"
 )
 
 scalacOptions in Test ++= Seq("-Yrangepos")

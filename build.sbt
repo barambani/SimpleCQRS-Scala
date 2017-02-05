@@ -1,5 +1,5 @@
 lazy val commonSettings = Seq (
-	scalaVersion := "2.11.8",
+	scalaVersion := "2.12.1",
 	version := "0.0.1",
 	name := "SimpleCqrsScala"
 )
@@ -14,10 +14,10 @@ lazy val simpleCqrsScala = (project in file("."))
 
 initialCommands in console := """
 	|import java.util.UUID
-    |import scalaz._
-    |import Scalaz._
     |import SimpleCqrsScala.CommandSide._
     |import SimpleCqrsScala.CommandSide.Domain._
+    |import scalaz._
+    |import scalaz.Scalaz._
 """.stripMargin
 
 logLevel := Level.Info

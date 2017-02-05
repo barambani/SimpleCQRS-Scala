@@ -17,7 +17,7 @@ object CommandHandler {
 		tryApplyToInventoryItem.lift(command) map (eventEmissionForTransition(_)) orElse (tryApplyToOrder.lift(command) map (eventEmissionForTransition(_)))
 
 	import InventoryItem._
-	private def tryApplyToInventoryItem: PartialFunction[Command, StateTransition[InventoryItem]] = {
+	private def tryApplyToInventoryItem: PartialFunction[Command, EitherTransition[InventoryItem]] = {
 		case CreateInventoryItem(id, name) 		=> InventoryItem.createFor(id)(name)
 		case DeactivateInventoryItem(_) 		=> deactivateInventoryItem
 		case RenameInventoryItem(_, newName) 	=> renameInventoryItem(newName)
@@ -26,7 +26,7 @@ object CommandHandler {
 	}
 
 	import Order._
-	private def tryApplyToOrder: PartialFunction[Command, StateTransition[Order]] = {
+	private def tryApplyToOrder: PartialFunction[Command, EitherTransition[Order]] = {
 		case CreateOrder(id, customerId, customerName) 					=> Order.createFor(id)(s"$customerId - $customerName")
 		case AddInventoryItemToOrder(_, inventoryItemId, quantity) 		=> addInventoryItemToOrder(inventoryItemId)(quantity)
 		case RemoveInventoryItemFromOrder(_, inventoryItemId, quantity)	=> removeInventoryItemFromOrder(inventoryItemId)(quantity)

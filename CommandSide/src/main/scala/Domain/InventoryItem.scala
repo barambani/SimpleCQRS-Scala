@@ -34,7 +34,7 @@ object InventoryItem {
 	lazy val renameInventoryItem: String => InventoryItem => EitherTransition[InventoryItem] = 
 		newName => item => 
 			if(!theNameIsValid(newName))	failedTransition(InventoryItemNameNotValid(item.id, Some(item.name), newName))
-			else 							newTransition(item => InventoryItemRenamed(item.id, newName, item.expectedNextVersion) :: Nil)
+			else 							newTransition(i => InventoryItemRenamed(i.id, newName, i.expectedNextVersion) :: Nil)
 
 	lazy val checkInItemsToInventory: Int => EitherTransition[InventoryItem] =
 		count => newTransition(item => ItemsCheckedInToInventory(item.id, count, item.expectedNextVersion) :: Nil)

@@ -4,50 +4,56 @@ import SimpleCqrsScala.CommandSide._
 import scalaz.StateT
 import scalaz.EitherT
 import scalaz.State
-import scalaz.\/
+import scalaz.Monad
+import scalaz.{\/, -\/, \/-}
 
 import AggregateRoot._
 
 object DomainState {
 
-	type StateTransition[A] = State[A, List[Event]]
+	type EitherState[S] = \/[ErrorMessage, S]
+	type EitherTransition[S] = StateT[EitherState, S, List[Event]]
 
-	type EitherTransition[A] = EitherT[StateTransition, ErrorMessage, A]
+	type CommandExecution[S] = S => List[Event]
 
-	type CommandExecution[A] = A => List[Event]
+	def zeroTransition[S] = State.state[S, List[Event]](Nil)
 
-	def zeroTransition[A] = State.state[A, List[Event]](Nil)
+	def liftS[S: Aggregate](f: S => (S, List[Event])): EitherTransition[S] = 
+		StateT[EitherState, S, List[Event]]{ s => Monad[EitherState].point(f(s)) }
 
-	def newTransition[A : Aggregate](ce: CommandExecution[A]): EitherTransition[A] = ???
-		// for {
-		// 	es 	<- State gets ce 
-		// 	_ 	<- State modify { s: A => evolve(s)(es) }
-		// } yield es
-
-	def failedTransition[A : Aggregate](e: ErrorMessage): EitherTransition[A] = ???
+	def liftE[S](e: ErrorMessage): EitherTransition[S] =
+		StateT[EitherState, S, List[Event]]{ _ => -\/(e) }
 	
-	def mergeTransitions[A](transitions: Seq[StateTransition[A]]): StateTransition[A] = {
+	def newTransition[S : Aggregate](ce: CommandExecution[S]): EitherTransition[S] =
+		liftS[S]{ s => (evolve(s)(ce(s)), ce(s)) }
 
-		def mergeSingleTransition[A](t: StateTransition[A], curr: StateTransition[A]): StateTransition[A] = State { 
-			(s: A) => {
-				lazy val (currS, currT) = curr.run(s)
-				lazy val (tS, tT) = t.run(currS)
-				(tS, tT ::: currT)
-			}
-		}
+	def failedTransition[S](e: ErrorMessage): EitherTransition[S] =
+		liftE(e)
+	
+	def execTransition[S]: EitherTransition[S] => S => \/[ErrorMessage, S] =
+		eitherTransition => aState => eitherTransition.exec(aState)
 
-		(transitions foldRight zeroTransition[A]) ((t,curr) => mergeSingleTransition(t, curr))
-	}
+	def evalTransition[S]: EitherTransition[S] => S => \/[ErrorMessage, List[Event]] = 
+		eitherTransition => aState => eitherTransition.eval(aState)
 
-	def execTransition[A]: StateTransition[A] => A => A =
-		tr => st => tr.exec(st)
 
-	def evalTransition[A]: StateTransition[A] => A => List[Event] = 
-		tr => st => tr.eval(st)
+	// def mergeTransitions[A](transitions: Seq[StateTransition[A]]): StateTransition[A] = {
 
-	def execTransitions[A]: Seq[StateTransition[A]] => A => A = 
-		trns => st => mergeTransitions(trns) exec st
+	// 	def mergeSingleTransition[A](t: StateTransition[A], curr: StateTransition[A]): StateTransition[A] = State { 
+	// 		(s: A) => {
+	// 			lazy val (currS, currT) = curr.run(s)
+	// 			lazy val (tS, tT) = t.run(currS)
+	// 			(tS, tT ::: currT)
+	// 		}
+	// 	}
 
-	def evalTransitions[A]: Seq[StateTransition[A]] => A => List[Event] = 
-		trns => st => mergeTransitions(trns) eval st
+	// 	(transitions foldRight zeroTransition[A]) ((t,curr) => mergeSingleTransition(t, curr))
+	// }
+
+
+	// def execTransitions[A]: Seq[StateTransition[A]] => A => A = 
+	// 	trns => st => mergeTransitions(trns) exec st
+
+	// def evalTransitions[A]: Seq[StateTransition[A]] => A => List[Event] = 
+	// 	trns => st => mergeTransitions(trns) eval st
 }
