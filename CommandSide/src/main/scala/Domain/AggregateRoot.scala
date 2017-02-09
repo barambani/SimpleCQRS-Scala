@@ -3,9 +3,6 @@ package SimpleCqrsScala.CommandSide.Domain
 import java.util.UUID
 import SimpleCqrsScala.CommandSide._
 import scala.annotation._
-import scalaz.Semigroup
-
-import scalaz._
 
 trait Versioned {
 	val version: Long

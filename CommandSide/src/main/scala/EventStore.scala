@@ -2,13 +2,17 @@ package SimpleCqrsScala.CommandSide
 
 import SimpleCqrsScala.CommandSide.Domain._
 import java.util.UUID
+import scalaz.Kleisli
+import fs2.Task
 
-trait Repository {
-	def Save(es: List[Event]): Unit 
-	def GetHistoryById(id: UUID): List[Event]
-}
+object Repository {
 
-object EventStore extends Repository {
-	def Save(es: List[Event]): Unit = ???
-	def GetHistoryById(id: UUID): List[Event] = ???
+	sealed trait EventStore {
+		val sink: Kleisli[Task, List[Event], Unit]
+		val history: Kleisli[Task, UUID, List[Event]]
+	}
+	implicit object EventStore {
+		val sink: Kleisli[Task, List[Event], Unit] = ???
+		val history: Kleisli[Task, UUID, List[Event]] = ???
+	}
 }

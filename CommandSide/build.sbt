@@ -15,6 +15,8 @@ val monocleVersion = "1.4.0"
 
 libraryDependencies ++= Seq(
 	"org.scalaz" %% "scalaz-core" % "7.2.8",
+	"co.fs2" %% "fs2-core" % "0.9.2",
+	"co.fs2" %% "fs2-io" % "0.9.2",
 
     "com.github.julien-truffaut"  %%  "monocle-core"    % monocleVersion,
   	"com.github.julien-truffaut"  %%  "monocle-generic" % monocleVersion,

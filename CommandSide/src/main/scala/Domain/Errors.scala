@@ -2,7 +2,6 @@ package SimpleCqrsScala.CommandSide.Domain
 
 import java.util.UUID
 import scala.language.implicitConversions
-import scalaz.Monad
 
 sealed trait ErrorMessage extends Product with Serializable
 

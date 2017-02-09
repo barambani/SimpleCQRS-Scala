@@ -2,7 +2,6 @@ package SimpleCqrsScala.CommandSide.Domain
 
 import SimpleCqrsScala.CommandSide._
 import scalaz.StateT
-import scalaz.EitherT
 import scalaz.State
 import scalaz.Monad
 import scalaz.{\/, -\/, \/-}
@@ -30,7 +29,7 @@ object DomainState {
 	def failedTransition[S](e: ErrorMessage): EitherTransition[S] =
 		liftE(e)
 	
-	def execTransition[S]: EitherTransition[S] => S => \/[ErrorMessage, S] =
+	def execTransition[S]: EitherTransition[S] => S => EitherState[S] =
 		eitherTransition => aState => eitherTransition.exec(aState)
 
 	def evalTransition[S]: EitherTransition[S] => S => \/[ErrorMessage, List[Event]] = 

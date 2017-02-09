@@ -4,8 +4,6 @@ import org.specs2.mutable._
 import SimpleCqrsScala.CommandSide._
 import SimpleCqrsScala.CommandSide.Domain._
 
-import scalaz._
-
 import java.util.UUID
 
 object InventoryItemSpec extends Specification {
