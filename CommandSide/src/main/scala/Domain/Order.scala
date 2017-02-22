@@ -10,6 +10,7 @@ import monocle.macros.GenLens
 import monocle.function.all.at
 import monocle.std.map._
 import scalaz.Scalaz._
+import scalaz.Reader
 
 import OrderItems._
 
@@ -45,37 +46,37 @@ object Order {
 
 	//	Commands
 	lazy val createFor: UUID => String => EitherTransition[Order] =
-		id => descr => newTransition(_ => OrderCreated(id, descr, 1) :: Nil)
+		id => descr => newTransition(Reader(_ => OrderCreated(id, descr, 1) :: Nil))
 
 	lazy val addInventoryItemToOrder: UUID => Int => Order => EitherTransition[Order] =
 		itemId => quantity => ord =>
-			if(!canBeChanged(ord))	failedTransition(OrderClosed(ord.id, ord.description))
-			else 					newTransition(o => InventoryItemAddedToOrder(o.id, itemId, quantity, o.expectedNextVersion) :: Nil)
+			if(!canBeChanged(ord)) failedTransition(OrderClosed(ord.id, ord.description))
+			else 				   newTransition(Reader(o => InventoryItemAddedToOrder(o.id, itemId, quantity, o.expectedNextVersion) :: Nil))
 
 	lazy val removeInventoryItemFromOrder: UUID => Int => Order => EitherTransition[Order] = 
 		itemId => quantity => ord => 
-			if(!canBeChanged(ord)) 						failedTransition(OrderClosed(ord.id, ord.description))
-			else if(!hasEnough(itemId)(quantity)(ord))	failedTransition(NotEnoughItemsInTheOrder(ord.id, ord.description, itemId, quantity))
+			if(!canBeChanged(ord)) 					   failedTransition(OrderClosed(ord.id, ord.description))
+			else if(!hasEnough(itemId)(quantity)(ord)) failedTransition(NotEnoughItemsInTheOrder(ord.id, ord.description, itemId, quantity))
 			else 												
-				newTransition(o => InventoryItemRemovedFromOrder(o.id, itemId, quantity, o.expectedNextVersion) :: Nil)
+				newTransition(Reader(o => InventoryItemRemovedFromOrder(o.id, itemId, quantity, o.expectedNextVersion) :: Nil))
 
 	lazy val addShippingAddressToOrder: String => Order => EitherTransition[Order] =
 		address => ord => 
 			if(!canBeChanged(ord)) 					failedTransition(OrderClosed(ord.id, ord.description))
 			else if(!shippingAddressValid(address))	failedTransition(ShippingAddressNotValid(ord.id, ord.description, address))
-			else 									newTransition(o => ShippingAddressAddedToOrder(ord.id, address, ord.expectedNextVersion) :: Nil)
+			else 									newTransition(Reader(o => ShippingAddressAddedToOrder(ord.id, address, ord.expectedNextVersion) :: Nil))
 
 	lazy val payTheBalance: Order => EitherTransition[Order] =
 		ord =>
 			if(!canBeChanged(ord)) 		failedTransition(OrderClosed(ord.id, ord.description))
 			else if(!canBePayed(ord))	failedTransition(OrderAlreadyPayed(ord.id, ord.description))
-			else 						newTransition(o => OrderPayed(o.id, o.expectedNextVersion) :: Nil)
+			else 						newTransition(Reader(o => OrderPayed(o.id, o.expectedNextVersion) :: Nil))
 
 	lazy val submit: Order => EitherTransition[Order] = 
 		ord =>
 			if(!canBeChanged(ord)) 			failedTransition(OrderClosed(ord.id, ord.description))
 			else if(!canBeSubmitted(ord))	failedTransition(OrderNotComplete(ord.id, ord.description))
-			else 							newTransition(o => OrderSubmitted(o.id, o.expectedNextVersion) :: Nil)
+			else 							newTransition(Reader(o => OrderSubmitted(o.id, o.expectedNextVersion) :: Nil))
 
 	//	Aggregate Evolution
 	lazy val newState: Order => Event => Order = 
@@ -114,7 +115,7 @@ object Order {
 		version = 0
 	)
 
-	//	Validation
+	//	Rules
 	private lazy val hasEnough: UUID => Int => Order => Boolean = 
 		itemId => quantity => ord => (ord.items get itemId).fold(false){ _ >= quantity }
 

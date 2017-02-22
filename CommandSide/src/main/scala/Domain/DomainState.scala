@@ -4,37 +4,36 @@ import SimpleCqrsScala.CommandSide._
 import scalaz.StateT
 import scalaz.State
 import scalaz.Monad
+import scalaz.Reader
 import scalaz.{\/, -\/, \/-}
 
 import AggregateRoot._
 
 object DomainState {
 
-	type EitherState[S] = \/[ErrorMessage, S]
-	type EitherTransition[S] = StateT[EitherState, S, List[Event]]
+	type EitherState[S] 	   = \/[ErrorMessage, S]
+	type EitherTransition[S]   = StateT[EitherState, S, List[Event]]
+	type CommandApplication[S] = Reader[S, List[Event]]
 
-	type CommandExecution[S] = S => List[Event]
+	def zeroTransition[S: Aggregate] = State.state[S, List[Event]](Nil)
 
-	def zeroTransition[S] = State.state[S, List[Event]](Nil)
+	def liftS[S: Aggregate](ca: CommandApplication[S]): EitherTransition[S] = 
+		StateT[EitherState, S, List[Event]]{ s => ca map (es => Monad[EitherState] point (evolve(s)(es), es)) run s }
 
-	def liftS[S: Aggregate](f: S => (S, List[Event])): EitherTransition[S] = 
-		StateT[EitherState, S, List[Event]]{ s => Monad[EitherState].point(f(s)) }
-
-	def liftE[S](e: ErrorMessage): EitherTransition[S] =
+	def liftE[S: Aggregate](e: ErrorMessage): EitherTransition[S] =
 		StateT[EitherState, S, List[Event]]{ _ => -\/(e) }
 	
-	def newTransition[S : Aggregate](ce: CommandExecution[S]): EitherTransition[S] =
-		liftS[S]{ s => (evolve(s)(ce(s)), ce(s)) }
+	//	alias for lift state
+	def newTransition[S: Aggregate](ca: CommandApplication[S]): EitherTransition[S] = liftS[S](ca)
 
-	def failedTransition[S](e: ErrorMessage): EitherTransition[S] =
-		liftE(e)
+	//	alias for lift error message
+	def failedTransition[S: Aggregate](e: ErrorMessage): EitherTransition[S] = liftE(e)
 	
-	def execTransition[S]: EitherTransition[S] => S => EitherState[S] =
-		eitherTransition => aState => eitherTransition.exec(aState)
+	def execTransition[S: Aggregate]: EitherTransition[S] => S => EitherState[S] =
+		eT => aState => eT.exec(aState)
 
-	def evalTransition[S]: EitherTransition[S] => S => \/[ErrorMessage, List[Event]] = 
-		eitherTransition => aState => eitherTransition.eval(aState)
-
+	def evalTransition[S: Aggregate]: EitherTransition[S] => S => \/[ErrorMessage, List[Event]] = 
+		eT => aState => eT.eval(aState)
 
 	// def mergeTransitions[A](transitions: Seq[StateTransition[A]]): StateTransition[A] = {
 

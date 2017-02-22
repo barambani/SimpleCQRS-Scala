@@ -3,10 +3,17 @@ package SimpleCqrsScala.CommandSide.Test
 import org.specs2.mutable._
 import SimpleCqrsScala.CommandSide._
 import SimpleCqrsScala.CommandSide.Domain._
+import SimpleCqrsScala.CommandSide.Domain.DomainState._
+import SimpleCqrsScala.CommandSide.Printer._
+
+import scalaz.{\/, -\/, \/-}
 
 import java.util.UUID
 
 object InventoryItemSpec extends Specification {
+
+	private def assertEitherState[S]: EitherState[S] => (S => Boolean) => \/[String, Boolean] = 
+		es => f => es leftMap (Printer.print(_)) map (f(_))
 
 	import InventoryItem._
 	import AggregateRoot._
@@ -89,9 +96,10 @@ object InventoryItemSpec extends Specification {
   			)
 	  		
 	  		lazy val item = InventoryItem.rehydrate(history)
+	  		lazy val transition = (execTransition compose removeItemsFromInventory(2))(item)
 
-	  		execTransition(removeItemsFromInventory(2))(item).itemsCount mustEqual 18
-	  		execTransition(removeItemsFromInventory(2))(item).version mustEqual 4
+	  		assertEitherState(transition)(_.itemsCount == 18) mustEqual true
+	  		assertEitherState(transition)(_.version == 4) mustEqual true
 	  	}
 
 	  	"have the correct state after one command application" in {
@@ -104,8 +112,8 @@ object InventoryItemSpec extends Specification {
 	  		
 	  		lazy val item = InventoryItem.rehydrate(history)
 
-	  		evalTransition(removeItemsFromInventory(7))(item) match {
-	  			case ItemsRemovedFromInventory(i, c, s) :: Nil => {
+	  		evalTransition(removeItemsFromInventory(7)(item))(item) match {
+	  			case \/-(ItemsRemovedFromInventory(i, c, s) :: Nil) => {
 					i mustEqual id
 					c mustEqual 7
 					s mustEqual 4
@@ -139,7 +147,7 @@ object InventoryItemSpec extends Specification {
 	  		lazy val item = InventoryItem.rehydrate(history)
 	  		lazy val transitions = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7), checkInItemsToInventory(3))
 			
-			lazy val newTransition: StateTransition[InventoryItem] = mergeTransitions(transitions)
+			lazy val newTransition: EitherTransition[InventoryItem] = mergeTransitions(transitions)
 
 	  		execTransition(newTransition)(item).itemsCount mustEqual 14
 	  		execTransition(newTransition)(item).version mustEqual 6

@@ -19,6 +19,8 @@ trait Aggregate[A] {
 }
 
 object Aggregate {
+	
+	def apply[A](implicit instance: Aggregate[A]): Aggregate[A] = instance
 
 	implicit object InventoryItemAggregate extends Aggregate[InventoryItem] {
 		lazy val newState: InventoryItem => Event => InventoryItem = InventoryItem.newState

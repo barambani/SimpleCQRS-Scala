@@ -4,55 +4,61 @@ import java.util.UUID
 import SimpleCqrsScala.CommandSide._
 import SimpleCqrsScala.CommandSide.Domain._
 
+import scalaz.Reader
+import scalaz.EitherT
+
 import scalaz.\/
 
 object CommandHandler {
 
 	import Repository._
 
-	def handle[C](c: C)(implicit H: Handler[C], ES: EventStore): \/[ErrorMessage, List[Event]] = H.handle(c)
+	type a[A] = Reader[EventStore, A]
+	type b = EitherT[a, ErrorMessage, List[Event]]
+
+	def handle[C](c: C)(implicit H: Handler[C]): \/[ErrorMessage, List[Event]] = H.handle(c)
 
 	sealed trait Handler[C] {
-		def handle(c: C)(implicit ES: EventStore): \/[ErrorMessage, List[Event]]
+		def handle(c: C): \/[ErrorMessage, List[Event]]
 	}
 
 	object Handler {
 
-		implicit object CreateInventoryItemH extends Handler[CreateInventoryItem] {
-			def handle(c: CreateInventoryItem)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		}
-		implicit object DeactivateInventoryItemH extends Handler[DeactivateInventoryItem] {
-			def handle(c: DeactivateInventoryItem)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		}
-		implicit object RenameInventoryItemH extends Handler[RenameInventoryItem] {
-			def handle(c: RenameInventoryItem)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		}
-		implicit object CheckInItemsToInventoryH extends Handler[CheckInItemsToInventory] {
-			def handle(c: CheckInItemsToInventory)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		}
-		implicit object RemoveItemsFromInventoryH extends Handler[RemoveItemsFromInventory] {
-			def handle(c: RemoveItemsFromInventory)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		}
+		// implicit object CreateInventoryItemH extends Handler[CreateInventoryItem] {
+		// 	def handle(c: CreateInventoryItem)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
+		// }
+		// implicit object DeactivateInventoryItemH extends Handler[DeactivateInventoryItem] {
+		// 	def handle(c: DeactivateInventoryItem)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
+		// }
+		// implicit object RenameInventoryItemH extends Handler[RenameInventoryItem] {
+		// 	def handle(c: RenameInventoryItem)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
+		// }
+		// implicit object CheckInItemsToInventoryH extends Handler[CheckInItemsToInventory] {
+		// 	def handle(c: CheckInItemsToInventory)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
+		// }
+		// implicit object RemoveItemsFromInventoryH extends Handler[RemoveItemsFromInventory] {
+		// 	def handle(c: RemoveItemsFromInventory)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
+		// }
 
 
-		implicit object CreateOrderH extends Handler[CreateOrder] {
-			def handle(c: CreateOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		}
-		implicit object AddInventoryItemToOrderH extends Handler[AddInventoryItemToOrder] {
-			def handle(c: AddInventoryItemToOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		}
-		implicit object RemoveInventoryItemFromOrderH extends Handler[RemoveInventoryItemFromOrder] {
-			def handle(c: RemoveInventoryItemFromOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		}
-		implicit object AddShippingAddressToOrderH extends Handler[AddShippingAddressToOrder] {
-			def handle(c: AddShippingAddressToOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		}
-		implicit object PayForTheOrderH extends Handler[PayForTheOrder] {
-			def handle(c: PayForTheOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		}
-		implicit object SubmitTheOrderH extends Handler[SubmitTheOrder] {
-			def handle(c: SubmitTheOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		}
+		// implicit object CreateOrderH extends Handler[CreateOrder] {
+		// 	def handle(c: CreateOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
+		// }
+		// implicit object AddInventoryItemToOrderH extends Handler[AddInventoryItemToOrder] {
+		// 	def handle(c: AddInventoryItemToOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
+		// }
+		// implicit object RemoveInventoryItemFromOrderH extends Handler[RemoveInventoryItemFromOrder] {
+		// 	def handle(c: RemoveInventoryItemFromOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
+		// }
+		// implicit object AddShippingAddressToOrderH extends Handler[AddShippingAddressToOrder] {
+		// 	def handle(c: AddShippingAddressToOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
+		// }
+		// implicit object PayForTheOrderH extends Handler[PayForTheOrder] {
+		// 	def handle(c: PayForTheOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
+		// }
+		// implicit object SubmitTheOrderH extends Handler[SubmitTheOrder] {
+		// 	def handle(c: SubmitTheOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
+		// }
 	}
 }
 

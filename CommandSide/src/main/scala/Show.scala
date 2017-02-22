@@ -8,6 +8,8 @@ trait Show[A] {
 
 object Show {
 
+	def apply[A](implicit instance: Show[A]): Show[A] = instance
+
 	// Events
 	implicit object InventoryItemCreatedShow extends Show[InventoryItemCreated] {
 		def stringFor(a: InventoryItemCreated): String = s"seq: ${a.sequence} - Item ${a.name} created (id: ${a.id})"

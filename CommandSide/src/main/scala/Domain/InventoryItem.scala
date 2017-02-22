@@ -6,6 +6,7 @@ import SimpleCqrsScala.CommandSide.Domain.DomainState._
 import monocle.macros.Lenses
 import scala.language.higherKinds
 import scalaz.{\/,-\/,\/-}
+import scalaz.Reader
 
 @Lenses final case class InventoryItem private (
 	id: UUID, 
@@ -25,24 +26,24 @@ object InventoryItem {
 	//	Commands
 	lazy val createFor: UUID => String => EitherTransition[InventoryItem] =
 		id => name => 
-			if(!theNameIsValid(name))	failedTransition(InventoryItemNameNotValid(id, None, name))
-			else 					 	newTransition(_ => InventoryItemCreated(id, name, 1) :: Nil)
+			if(!theNameIsValid(name)) failedTransition(InventoryItemNameNotValid(id, None, name))
+			else 					  newTransition(Reader(_ => InventoryItemCreated(id, name, 1) :: Nil))
 
 	lazy val deactivateInventoryItem: EitherTransition[InventoryItem] = 
-		newTransition(i => InventoryItemDeactivated(i.id, i.expectedNextVersion) :: Nil)
+		newTransition(Reader(i => InventoryItemDeactivated(i.id, i.expectedNextVersion) :: Nil))
 
 	lazy val renameInventoryItem: String => InventoryItem => EitherTransition[InventoryItem] = 
 		newName => item => 
-			if(!theNameIsValid(newName))	failedTransition(InventoryItemNameNotValid(item.id, Some(item.name), newName))
-			else 							newTransition(i => InventoryItemRenamed(i.id, newName, i.expectedNextVersion) :: Nil)
+			if(!theNameIsValid(newName)) failedTransition(InventoryItemNameNotValid(item.id, Some(item.name), newName))
+			else 						 newTransition(Reader(i => InventoryItemRenamed(i.id, newName, i.expectedNextVersion) :: Nil))
 
 	lazy val checkInItemsToInventory: Int => EitherTransition[InventoryItem] =
-		count => newTransition(item => ItemsCheckedInToInventory(item.id, count, item.expectedNextVersion) :: Nil)
+		count => newTransition(Reader(i => ItemsCheckedInToInventory(i.id, count, i.expectedNextVersion) :: Nil))
 	
 	lazy val removeItemsFromInventory: Int => InventoryItem => EitherTransition[InventoryItem] = 
 		count => item =>
-			if(!availableInStock(item)(count))	failedTransition(NotEnoughItemsInStock(item.id, item.name, count))
-			else 								newTransition(i => ItemsRemovedFromInventory(i.id, count, i.expectedNextVersion) :: Nil)
+			if(!availableInStock(item)(count)) failedTransition(NotEnoughItemsInStock(item.id, item.name, count))
+			else 							   newTransition(Reader(i => ItemsRemovedFromInventory(i.id, count, i.expectedNextVersion) :: Nil))
 
 	//	Aggregate Evolution
 	lazy val newState: InventoryItem => Event => InventoryItem = 
@@ -70,7 +71,7 @@ object InventoryItem {
 
 	private lazy val empty = InventoryItem(id = new UUID(0, 0), name = "", isActive = false, itemsCount = 0, version = 0)
 
-	//	Validation
+	//	Rules
 	private lazy val theNameIsValid: String => Boolean = 
 		n => !n.isEmpty
 
