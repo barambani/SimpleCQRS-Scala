@@ -40,6 +40,7 @@ object Order {
 
 	import Event._
 	import AggregateRoot._
+	import EitherTransition._
 	
 	def rehydrate(history: Event*): Order = rehydrate(history.toList)
 	def rehydrate(history: List[Event]): Order = evolve(empty)(history)

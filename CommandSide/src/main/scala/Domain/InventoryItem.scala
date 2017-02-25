@@ -19,6 +19,7 @@ object InventoryItem {
 
 	import Event._
 	import AggregateRoot._
+	import EitherTransition._
 
 	def rehydrate(history: Event*): InventoryItem = rehydrate(history.toList)
 	def rehydrate(history: List[Event]): InventoryItem = evolve(empty)(history)

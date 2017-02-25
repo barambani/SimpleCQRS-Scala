@@ -13,33 +13,42 @@ object DomainState {
 
 	type EitherState[S] 	   = \/[ErrorMessage, S]
 	type CommandApplication[S] = Reader[S, List[Event]]
+	
 	type EitherTransition[S]   = StateT[EitherState, S, List[Event]]
-
-	def zeroTransition[S: Aggregate] = State.state[S, List[Event]](Nil)
-
-	def liftS[S: Aggregate](ca: CommandApplication[S]): EitherTransition[S] = 
-		stateFor(ca).lift[EitherState]
-
-	def liftE[S: Aggregate](e: ErrorMessage): EitherTransition[S] =
-		StateT[EitherState, S, List[Event]]{ _ => -\/(e) }
 	
-	//	alias for lift state
-	def newTransition[S: Aggregate](ca: CommandApplication[S]): EitherTransition[S] = liftS(ca)
+	object EitherTransition {
 
-	//	alias for lift error message
-	def failedTransition[S: Aggregate](e: ErrorMessage): EitherTransition[S] = liftE(e)
-	
-	def execTransition[S: Aggregate]: EitherTransition[S] => S => \/[ErrorMessage, S] =
-		eT => aState => eT.exec(aState)
+		def zeroTransition[S: Aggregate] = State.state[S, List[Event]](Nil)
 
-	def evalTransition[S: Aggregate]: EitherTransition[S] => S => \/[ErrorMessage, List[Event]] = 
-		eT => aState => eT.eval(aState)
+		def apply[S: Aggregate](es: EitherState[(S, List[Event])]): EitherTransition[S] = 
+			StateT[EitherState, S, List[Event]](_ => es)
 
-	private def stateFor[S: Aggregate](ca: CommandApplication[S]): State[S, List[Event]] = for {
-		events	<- State.gets(ca.run)
-		_		<- State.modify { s: S => evolve(s)(events) }
+		def liftS[S: Aggregate](ca: CommandApplication[S]): EitherTransition[S] = 
+			stateFor(ca).lift[EitherState]
 
-	} yield events
+		def liftE[S: Aggregate](e: ErrorMessage): EitherTransition[S] =
+			apply(-\/(e))
+		
+		//	alias for lift state
+		def newTransition[S: Aggregate](ca: CommandApplication[S]): EitherTransition[S] = 
+			liftS(ca)
+
+		//	alias for lift error message
+		def failedTransition[S: Aggregate](e: ErrorMessage): EitherTransition[S] = 
+			liftE(e)
+		
+		def execTransition[S: Aggregate]: EitherTransition[S] => S => \/[ErrorMessage, S] =
+			eT => aState => eT.exec(aState)
+
+		def evalTransition[S: Aggregate]: EitherTransition[S] => S => \/[ErrorMessage, List[Event]] = 
+			eT => aState => eT.eval(aState)
+
+		private def stateFor[S: Aggregate](ca: CommandApplication[S]): State[S, List[Event]] = for {
+			events	<- State.gets(ca.run)
+			_		<- State.modify { s: S => evolve(s)(events) }
+
+		} yield events
+	}
 
 	// def mergeTransitions[A](transitions: Seq[StateTransition[A]]): StateTransition[A] = {
 
