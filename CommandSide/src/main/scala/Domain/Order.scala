@@ -115,7 +115,7 @@ object Order {
 		version = 0
 	)
 
-	//	Rules
+	//	Validation
 	private lazy val hasEnough: UUID => Int => Order => Boolean = 
 		itemId => quantity => ord => (ord.items get itemId).fold(false){ _ >= quantity }
 

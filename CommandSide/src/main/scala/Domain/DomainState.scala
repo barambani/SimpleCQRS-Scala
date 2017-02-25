@@ -12,28 +12,34 @@ import AggregateRoot._
 object DomainState {
 
 	type EitherState[S] 	   = \/[ErrorMessage, S]
-	type EitherTransition[S]   = StateT[EitherState, S, List[Event]]
 	type CommandApplication[S] = Reader[S, List[Event]]
+	type EitherTransition[S]   = StateT[EitherState, S, List[Event]]
 
 	def zeroTransition[S: Aggregate] = State.state[S, List[Event]](Nil)
 
 	def liftS[S: Aggregate](ca: CommandApplication[S]): EitherTransition[S] = 
-		StateT[EitherState, S, List[Event]]{ s => ca map (es => Monad[EitherState] point (evolve(s)(es), es)) run s }
+		stateFor(ca).lift[EitherState]
 
 	def liftE[S: Aggregate](e: ErrorMessage): EitherTransition[S] =
 		StateT[EitherState, S, List[Event]]{ _ => -\/(e) }
 	
 	//	alias for lift state
-	def newTransition[S: Aggregate](ca: CommandApplication[S]): EitherTransition[S] = liftS[S](ca)
+	def newTransition[S: Aggregate](ca: CommandApplication[S]): EitherTransition[S] = liftS(ca)
 
 	//	alias for lift error message
 	def failedTransition[S: Aggregate](e: ErrorMessage): EitherTransition[S] = liftE(e)
 	
-	def execTransition[S: Aggregate]: EitherTransition[S] => S => EitherState[S] =
+	def execTransition[S: Aggregate]: EitherTransition[S] => S => \/[ErrorMessage, S] =
 		eT => aState => eT.exec(aState)
 
 	def evalTransition[S: Aggregate]: EitherTransition[S] => S => \/[ErrorMessage, List[Event]] = 
 		eT => aState => eT.eval(aState)
+
+	private def stateFor[S: Aggregate](ca: CommandApplication[S]): State[S, List[Event]] = for {
+		events	<- State.gets(ca.run)
+		_		<- State.modify { s: S => evolve(s)(events) }
+
+	} yield events
 
 	// def mergeTransitions[A](transitions: Seq[StateTransition[A]]): StateTransition[A] = {
 

@@ -71,7 +71,7 @@ object InventoryItem {
 
 	private lazy val empty = InventoryItem(id = new UUID(0, 0), name = "", isActive = false, itemsCount = 0, version = 0)
 
-	//	Rules
+	//	Validation
 	private lazy val theNameIsValid: String => Boolean = 
 		n => !n.isEmpty
 
