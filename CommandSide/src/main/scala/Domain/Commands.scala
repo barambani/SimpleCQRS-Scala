@@ -5,7 +5,7 @@ import java.util.UUID
 sealed trait Command extends Identified with Product with Serializable
 
 //	Order
-final case class CreateOrder(id: UUID, customerId: UUID, customerName: UUID) extends Command
+final case class CreateOrder(id: UUID, customerId: UUID, customerName: String) extends Command
 final case class AddInventoryItemToOrder(id: UUID, inventoryItemId: UUID, quantity: Int) extends Command
 final case class RemoveInventoryItemFromOrder(id: UUID, inventoryItemId: UUID, quantity: Int) extends Command
 final case class AddShippingAddressToOrder(id: UUID, shippingAddress: String) extends Command

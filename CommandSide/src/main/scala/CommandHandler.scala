@@ -3,98 +3,103 @@ package SimpleCqrsScala.CommandSide
 import java.util.UUID
 import SimpleCqrsScala.CommandSide._
 import SimpleCqrsScala.CommandSide.Domain._
-
 import scalaz.Reader
-import scalaz.EitherT
-
 import scalaz.\/
+import Repository._
+import DomainState._
+import EitherTransition._
+import scalaz.concurrent.Task
+import SimpleCqrsScala.CommandSide.Domain.InventoryItem._
+import SimpleCqrsScala.CommandSide.Domain.Order._
+
+sealed trait CommandHandler[C] {
+
+	import CommandHandler._
+
+	def handle(c: C): CommandEffect
+}
 
 object CommandHandler {
 
-	import Repository._
+	type Result = \/[ErrorMessage, List[Event]]
+	type CommandEffect = Reader[Query, Task[Result]]
 
-	type a[A] = Reader[EventStore, A]
-	type b = EitherT[a, ErrorMessage, List[Event]]
+	def apply[C](implicit instance: CommandHandler[C]): CommandHandler[C] = instance
 
-	def handle[C](c: C)(implicit H: Handler[C]): \/[ErrorMessage, List[Event]] = H.handle(c)
+	def transitionAfterState[S: Aggregate](t: S => EitherTransition[S])(s: S): Task[Result] = 
+		Task.now(evalTransition(t(s))(s))
 
-	sealed trait Handler[C] {
-		def handle(c: C): \/[ErrorMessage, List[Event]]
-	}
+	def transitionAfterHistory[S: Aggregate](t: S => EitherTransition[S])(h: List[Event]): Task[Result] = 
+		transitionAfterState(t)(Aggregate[S].rehydrate(h))
 
-	object Handler {
+	def initialEffectOf[S: Aggregate](t: EitherTransition[S]): CommandEffect = 
+		Reader{ _ => transitionAfterHistory[S](_ => t)(Nil) }
 
-		// implicit object CreateInventoryItemH extends Handler[CreateInventoryItem] {
-		// 	def handle(c: CreateInventoryItem)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		// }
-		// implicit object DeactivateInventoryItemH extends Handler[DeactivateInventoryItem] {
-		// 	def handle(c: DeactivateInventoryItem)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		// }
-		// implicit object RenameInventoryItemH extends Handler[RenameInventoryItem] {
-		// 	def handle(c: RenameInventoryItem)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		// }
-		// implicit object CheckInItemsToInventoryH extends Handler[CheckInItemsToInventory] {
-		// 	def handle(c: CheckInItemsToInventory)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		// }
-		// implicit object RemoveItemsFromInventoryH extends Handler[RemoveItemsFromInventory] {
-		// 	def handle(c: RemoveItemsFromInventory)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		// }
+	def effectForS[S: Aggregate](t: S => EitherTransition[S])(id: UUID): CommandEffect = 
+		Reader{ q => (q andThenK transitionAfterHistory(t)).run(id) }
 
-
-		// implicit object CreateOrderH extends Handler[CreateOrder] {
-		// 	def handle(c: CreateOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		// }
-		// implicit object AddInventoryItemToOrderH extends Handler[AddInventoryItemToOrder] {
-		// 	def handle(c: AddInventoryItemToOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		// }
-		// implicit object RemoveInventoryItemFromOrderH extends Handler[RemoveInventoryItemFromOrder] {
-		// 	def handle(c: RemoveInventoryItemFromOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		// }
-		// implicit object AddShippingAddressToOrderH extends Handler[AddShippingAddressToOrder] {
-		// 	def handle(c: AddShippingAddressToOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		// }
-		// implicit object PayForTheOrderH extends Handler[PayForTheOrder] {
-		// 	def handle(c: PayForTheOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		// }
-		// implicit object SubmitTheOrderH extends Handler[SubmitTheOrder] {
-		// 	def handle(c: SubmitTheOrder)(implicit ES: EventStore): \/[ErrorMessage, List[Event]] = ???
-		// }
-	}
+	def effectFor[S: Aggregate](t: EitherTransition[S])(id: UUID): CommandEffect = 
+		effectForS[S](_ => t)(id)
 }
 
-// object CommandHandler {
+object DomainCommandHandlers {
 
-// 	import DomainState._
+	import CommandHandler._
 	
-// 	def handleOne(historyRepository: Identified => List[Event])(command: Command): List[Event] =
-// 		tryApplyCommand(command) map (f => (f compose historyRepository)(command)) getOrElse Nil
+	implicit object CreateInventoryItemH extends CommandHandler[CreateInventoryItem] {
+		def handle(c: CreateInventoryItem): CommandEffect = 
+			initialEffectOf(InventoryItem.createFor(c.id)(c.name))
+	}
+	
+	implicit object DeactivateInventoryItemH extends CommandHandler[DeactivateInventoryItem] {
+		def handle(c: DeactivateInventoryItem): CommandEffect = 
+			effectFor(deactivateInventoryItem)(c.id)
+	}
 
-// 	def handleMany(historyRepository: Identified => List[Event])(commands: List[Command]): List[Event] =
-// 		commands flatMap handleOne(historyRepository)
+	implicit object RenameInventoryItemH extends CommandHandler[RenameInventoryItem] {
+		def handle(c: RenameInventoryItem): CommandEffect = 
+			effectForS(renameInventoryItem(c.newName))(c.id)
+	}
 
-// 	private def tryApplyCommand(command: Command): Option[List[Event] => List[Event]] =
-// 		tryApplyToInventoryItem.lift(command) map (eventEmissionForTransition(_)) orElse (tryApplyToOrder.lift(command) map (eventEmissionForTransition(_)))
+	implicit object CheckInItemsToInventoryH extends CommandHandler[CheckInItemsToInventory] {
+		def handle(c: CheckInItemsToInventory): CommandEffect = 
+			effectFor(checkInItemsToInventory(c.count))(c.id)
+	}
 
-	// import InventoryItem._
-	// private def tryApplyToInventoryItem: PartialFunction[Command, EitherTransition[InventoryItem]] = {
-		//case CreateInventoryItem(id, name) 		=> InventoryItem.createFor(id)(name)
-		//case DeactivateInventoryItem(_) 		=> deactivateInventoryItem
-		//case RenameInventoryItem(_, newName) 	=> renameInventoryItem(newName)
-		//case CheckInItemsToInventory(_, count)	=> checkInItemsToInventory(count)
-		//case RemoveItemsFromInventory(_, count)	=> removeItemsFromInventory(count)
-	// }
+	implicit object RemoveItemsFromInventoryH extends CommandHandler[RemoveItemsFromInventory] {
+		def handle(c: RemoveItemsFromInventory): CommandEffect = 
+			effectForS(removeItemsFromInventory(c.count))(c.id)
+	}
 
-	// import Order._
-	//private def tryApplyToOrder: PartialFunction[Command, EitherTransition[Order]] = {
-		//case CreateOrder(id, customerId, customerName) 					=> Order.createFor(id)(s"$customerId - $customerName")
-		//case AddInventoryItemToOrder(_, inventoryItemId, quantity) 		=> addInventoryItemToOrder(inventoryItemId)(quantity)
-		//case RemoveInventoryItemFromOrder(_, inventoryItemId, quantity)	=> removeInventoryItemFromOrder(inventoryItemId)(quantity)
-		//case AddShippingAddressToOrder(_, shippingAddress)				=> addShippingAddressToOrder(shippingAddress)
-		//case PayForTheOrder(_) 											=> payTheBalance
-		//case SubmitTheOrder(_)											=> submit
-	//}
 
-// 	private def eventEmissionForTransition[A : Aggregate](stateTransition: StateTransition[A]): List[Event] => List[Event] =
-// 		evalTransition(stateTransition) compose AggregateRoot.rehydrated[A] _
-// }
 
+	implicit object CreateOrderH extends CommandHandler[CreateOrder] {
+		def handle(c: CreateOrder): CommandEffect = 
+			initialEffectOf(Order.createFor(c.id)(c.customerId)(c.customerName))
+	}
+
+	implicit object AddInventoryItemToOrderH extends CommandHandler[AddInventoryItemToOrder] {
+		def handle(c: AddInventoryItemToOrder): CommandEffect = 
+			effectForS(addInventoryItemToOrder(c.inventoryItemId)(c.quantity))(c.id)
+	}
+
+	implicit object RemoveInventoryItemFromOrderH extends CommandHandler[RemoveInventoryItemFromOrder] {
+		def handle(c: RemoveInventoryItemFromOrder): CommandEffect = 
+			effectForS(removeInventoryItemFromOrder(c.inventoryItemId)(c.quantity))(c.id)
+	}
+
+	implicit object AddShippingAddressToOrderH extends CommandHandler[AddShippingAddressToOrder] {
+		def handle(c: AddShippingAddressToOrder): CommandEffect = 
+			effectForS(addShippingAddressToOrder(c.shippingAddress))(c.id)
+	}
+
+	implicit object PayForTheOrderH extends CommandHandler[PayForTheOrder] {
+		def handle(c: PayForTheOrder): CommandEffect = 
+			effectForS(payTheBalance)(c.id)
+	}
+
+	implicit object SubmitTheOrderH extends CommandHandler[SubmitTheOrder] {
+		def handle(c: SubmitTheOrder): CommandEffect = 
+			effectForS(submit)(c.id)
+	}
+}

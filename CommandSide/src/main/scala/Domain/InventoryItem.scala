@@ -70,7 +70,12 @@ object InventoryItem {
 				case _ => aggregate // TODO: log event ignored with event details
 			}
 
-	private lazy val empty = InventoryItem(id = new UUID(0, 0), name = "", isActive = false, itemsCount = 0, version = 0)
+	lazy val empty = InventoryItem(
+		id = Event.zeroEvent.id, name = "", 
+		isActive = false, 
+		itemsCount = 0, 
+		version = Event.zeroEvent.sequence
+	)
 
 	//	Validation
 	private lazy val theNameIsValid: String => Boolean = 

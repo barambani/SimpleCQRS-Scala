@@ -34,14 +34,14 @@ object DomainState {
 			liftS(ca)
 
 		//	alias for lift error message
-		def failedTransition[S: Aggregate](e: ErrorMessage): EitherTransition[S] = 
+		def failedTransition[S: Aggregate, ER <: ErrorMessage](e: ER): EitherTransition[S] = 
 			liftE(e)
 		
-		def execTransition[S: Aggregate]: EitherTransition[S] => S => \/[ErrorMessage, S] =
-			eT => aState => eT.exec(aState)
+		def execTransition[S: Aggregate](eT: EitherTransition[S])(aState: S): \/[ErrorMessage, S] =
+			eT.exec(aState)
 
-		def evalTransition[S: Aggregate]: EitherTransition[S] => S => \/[ErrorMessage, List[Event]] = 
-			eT => aState => eT.eval(aState)
+		def evalTransition[S: Aggregate](eT: EitherTransition[S])(aState: S): \/[ErrorMessage, List[Event]] = 
+			eT.eval(aState)
 
 		private def stateFor[S: Aggregate](ca: CommandApplication[S]): State[S, List[Event]] = for {
 			events	<- State.gets(ca.run)

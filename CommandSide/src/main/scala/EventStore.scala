@@ -2,17 +2,20 @@ package SimpleCqrsScala.CommandSide
 
 import SimpleCqrsScala.CommandSide.Domain._
 import java.util.UUID
-import scalaz.Kleisli
-import fs2.Task
+import scalaz.ReaderT
+import scalaz.concurrent.Task
 
 object Repository {
 
+	type Query = ReaderT[Task, UUID, List[Event]]
+	type Write = ReaderT[Task, List[Event], Unit]
+
 	sealed trait EventStore {
-		val sink: Kleisli[Task, List[Event], Unit]
-		val history: Kleisli[Task, UUID, List[Event]]
+		val sink: Write
+		val history: Query
 	}
 	implicit object EventStore {
-		val sink: Kleisli[Task, List[Event], Unit] = ???
-		val history: Kleisli[Task, UUID, List[Event]] = ???
+		val sink: Write = ???
+		val history: Query = ???
 	}
 }

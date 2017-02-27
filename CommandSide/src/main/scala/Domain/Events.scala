@@ -14,8 +14,13 @@ sealed trait Event extends Sequenced with Identified with Product with Serializa
 
 object Event {
 	
+	case object zeroEvent extends Event {
+		val id = new UUID(0, 0)
+		val sequence = 0
+	}
+	
 	lazy val hasACorrectId: Identified => Identity => Boolean = 
-		event => aggregate => aggregate.id == new UUID(0, 0) || event.id == aggregate.id
+		event => aggregate => aggregate.id == zeroEvent.id || event.id == aggregate.id
 
 	lazy val isInSequence: Sequenced => Versioned => Boolean = 
 		event => aggregate => event.sequence == aggregate.expectedNextVersion

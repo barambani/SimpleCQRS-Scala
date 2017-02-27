@@ -46,8 +46,8 @@ object Order {
 	def rehydrate(history: List[Event]): Order = evolve(empty)(history)
 
 	//	Commands
-	lazy val createFor: UUID => String => EitherTransition[Order] =
-		id => descr => newTransition(Reader(_ => OrderCreated(id, descr, 1) :: Nil))
+	lazy val createFor: UUID => UUID => String => EitherTransition[Order] =
+		id => customerId => customerName => newTransition(Reader(_ => OrderCreated(id, s"Order for $customerName (id: $customerId)", 1) :: Nil))
 
 	lazy val addInventoryItemToOrder: UUID => Int => Order => EitherTransition[Order] =
 		itemId => quantity => ord =>
@@ -106,14 +106,14 @@ object Order {
 				case _ => aggregate // TODO: log event ignored with event details
 			}
 
-	private lazy val empty = Order(
-		id = new UUID(0, 0),
+	lazy val empty = Order(
+		id = Event.zeroEvent.id,
 		description = "",
 		shippingAddress = "",
 		isPayed = false,
 		items = OrderItems.empty,
 		status = Open,
-		version = 0
+		version = Event.zeroEvent.sequence
 	)
 
 	//	Validation
