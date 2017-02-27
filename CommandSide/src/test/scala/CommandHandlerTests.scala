@@ -4,8 +4,12 @@ import java.util.UUID
 import org.specs2.mutable._
 import scala.collection.mutable._
 import SimpleCqrsScala.CommandSide.Domain._
-
 import SimpleCqrsScala.CommandSide._
+import scalaz.ReaderT
+import Repository._
+import scalaz.concurrent.Task
+import CommandHandler._
+import DomainCommandHandlers._
 
 object CommandHandlerSpec extends Specification {
 
@@ -19,8 +23,11 @@ object CommandHandlerSpec extends Specification {
 		InventoryItemCreated(id, "First Inventory Item Name", 1)
 	)
 	
-	lazy val eventStoreRepository: Identified => List[Event] = _ => history
-	lazy val handleWithSideEffect: Command => List[Event] = CommandHandler.handleOne(eventStoreRepository) _
+	lazy val eventStoreQuery: Query = 
+		ReaderT(_ => Task.now(history))
+	
+	def handleWithSideEffect[C](c: C)(implicit CH: CommandHandler[C]): Result = 
+		CH.handle(c).run(eventStoreQuery).run
 
 	"The Command Handler" should {
 
@@ -30,8 +37,8 @@ object CommandHandlerSpec extends Specification {
 
   			lazy val evolution = handleWithSideEffect(CreateInventoryItem(id, expectedName))
 
-			evolution.head match {
-				case InventoryItemCreated(eid,name,sequence) => {
+			evolution.toOption match {
+				case Some(InventoryItemCreated(eid,name,sequence) :: xs) => {
 					eid mustEqual id
 					name mustEqual expectedName
 					sequence mustEqual 1
@@ -46,8 +53,8 @@ object CommandHandlerSpec extends Specification {
 
 	  		lazy val evolution = handleWithSideEffect(RenameInventoryItem(id, expectedName))
 			
-			evolution.head match {
-				case InventoryItemRenamed(eid,newName,sequence) => newName mustEqual expectedName
+			evolution.toOption match {
+				case Some(InventoryItemRenamed(eid,newName,sequence) :: xs) => newName mustEqual expectedName
 				case _ => ko("The event saved into store is not correct")
 			}
 	  	}
@@ -59,8 +66,8 @@ object CommandHandlerSpec extends Specification {
 
   			lazy val evolution = handleWithSideEffect(CheckInItemsToInventory(id, expectedCheckedInCount))
   			
-  			evolution.head match {
-				case ItemsCheckedInToInventory(eid,count,sequence) => count mustEqual expectedCheckedInCount
+  			evolution.toOption match {
+				case Some(ItemsCheckedInToInventory(eid,count,sequence) :: xs) => count mustEqual expectedCheckedInCount
 				case _ => ko("The event saved into store is not correct")
 			}
 	  	}
@@ -72,8 +79,8 @@ object CommandHandlerSpec extends Specification {
 
   			lazy val evolution = handleWithSideEffect(RemoveItemsFromInventory(id, expectedCheckedInCount))
   			
-  			evolution.head match {
-				case ItemsRemovedFromInventory(eid,count,sequence) => count mustEqual expectedCheckedInCount
+  			evolution.toOption match {
+				case Some(ItemsRemovedFromInventory(eid,count,sequence) :: xs) => count mustEqual expectedCheckedInCount
 				case _ => ko("The event saved into store is not correct")
 			}
 	  	}
@@ -86,8 +93,8 @@ object CommandHandlerSpec extends Specification {
 
   			lazy val evolution = handleWithSideEffect(AddInventoryItemToOrder(id, customerId, expectedItemsOfId))
   			
-  			evolution.head match {
-				case InventoryItemAddedToOrder(id, inventoryItemId, quantity, sequence) => quantity mustEqual expectedItemsOfId
+  			evolution.toOption match {
+				case Some(InventoryItemAddedToOrder(id, inventoryItemId, quantity, sequence) :: xs) => quantity mustEqual expectedItemsOfId
 				case _ => ko("The event saved into store is not correct")
 			}
 	  	}
