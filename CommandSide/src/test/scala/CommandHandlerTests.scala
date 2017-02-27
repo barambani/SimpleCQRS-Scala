@@ -27,7 +27,7 @@ object CommandHandlerSpec extends Specification {
 		ReaderT(_ => Task.now(history))
 	
 	def handleWithSideEffect[C](c: C)(implicit CH: CommandHandler[C]): Result = 
-		CH.handle(c).run(eventStoreQuery).run
+		CH.handle(c).run(eventStoreQuery).unsafePerformSync
 
 	"The Command Handler" should {
 

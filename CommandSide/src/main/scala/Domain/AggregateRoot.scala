@@ -38,7 +38,8 @@ object Aggregate {
 
 object AggregateLaws {
 	def law1[A](implicit AGG: Aggregate[A]): Boolean = AGG.rehydrate(Nil) == AGG.zero
-	def law2[A](implicit AGG: Aggregate[A]): Boolean = AGG.newState(AGG.zero)(Event.zeroEvent) == AGG.zero
+	def law2[A](implicit AGG: Aggregate[A]): Boolean = AGG.rehydrate(Event.zeroEvent :: Nil) == AGG.zero
+	def law3[A](implicit AGG: Aggregate[A]): Boolean = AGG.newState(AGG.zero)(Event.zeroEvent) == AGG.zero
 }
 
 object AggregateRoot {
