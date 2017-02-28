@@ -4,13 +4,14 @@ import org.specs2.mutable._
 import SimpleCqrsScala.CommandSide.Domain.InventoryItem
 import SimpleCqrsScala.CommandSide.Domain.Order
 import SimpleCqrsScala.CommandSide.Domain._
+import DomainAggregates._
 import AggregateLaws._
 
 abstract class AggreagateLawsChecks[A](name: String)(implicit AGG: Aggregate[A]) extends Specification {
 
 	lazy val laws = AggregateLaws[A]
 
-	s"$name" should {
+	s"the $name" should {
 		"respect the first Aggregate law: rehydrating from an empty history gives the zero aggregate" in {
   			laws.law1 must be equalTo(true)
 		}

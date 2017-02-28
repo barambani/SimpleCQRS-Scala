@@ -18,6 +18,7 @@ import scalaz.Reader
 object InventoryItem {
 
 	import Event._
+	import DomainAggregates._
 	import AggregateRoot._
 	import EitherTransition._
 

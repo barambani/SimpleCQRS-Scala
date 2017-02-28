@@ -39,6 +39,7 @@ final case object Voided extends OrderStatus
 object Order {
 
 	import Event._
+	import DomainAggregates._
 	import AggregateRoot._
 	import EitherTransition._
 	

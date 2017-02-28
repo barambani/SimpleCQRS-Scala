@@ -22,24 +22,11 @@ trait Aggregate[A] {
 }
 
 object Aggregate {
-	
 	def apply[A](implicit instance: Aggregate[A]): Aggregate[A] = instance
-
-	implicit object InventoryItemAggregate extends Aggregate[InventoryItem] {
-		lazy val zero: InventoryItem = InventoryItem.empty
-		lazy val newState: InventoryItem => Event => InventoryItem = InventoryItem.newState
-		lazy val rehydrate: List[Event] => InventoryItem = InventoryItem.rehydrate
-	}
-
-	implicit object OrderAggregate extends Aggregate[Order] {
-		lazy val zero: Order = Order.empty
-		lazy val newState: Order => Event => Order = Order.newState
-		lazy val rehydrate: List[Event] => Order = Order.rehydrate
-	}
 }
 
 
-trait AggregateLaws[A] {
+sealed trait AggregateLaws[A] {
 
 	def AGG: Aggregate[A]
 
@@ -66,4 +53,19 @@ object AggregateRoot {
 	@implicitNotFound("implicit not found for Aggregate[{A}]")
 	def rehydrated[A](history: List[Event])(implicit AGG: Aggregate[A]): A = 
 		AGG.rehydrate(history)
+}
+
+object DomainAggregates {
+
+	implicit object InventoryItemAggregate extends Aggregate[InventoryItem] {
+		lazy val zero: InventoryItem = InventoryItem.empty
+		lazy val newState: InventoryItem => Event => InventoryItem = InventoryItem.newState
+		lazy val rehydrate: List[Event] => InventoryItem = InventoryItem.rehydrate
+	}
+
+	implicit object OrderAggregate extends Aggregate[Order] {
+		lazy val zero: Order = Order.empty
+		lazy val newState: Order => Event => Order = Order.newState
+		lazy val rehydrate: List[Event] => Order = Order.rehydrate
+	}
 }

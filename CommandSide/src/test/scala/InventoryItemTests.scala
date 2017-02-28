@@ -14,6 +14,7 @@ object InventoryItemSpec extends Specification {
 
 	import InventoryItem._
 	import AggregateRoot._
+	import DomainAggregates._
 	import DomainState._
 
 	private def assertEitherState[S]: EitherState[S] => (S => Boolean) => Boolean = 
