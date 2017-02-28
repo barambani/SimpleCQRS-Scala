@@ -4,6 +4,8 @@ import java.util.UUID
 import SimpleCqrsScala.CommandSide._
 import scala.annotation._
 
+import scala.language.higherKinds
+
 trait Versioned {
 	val version: Long
 	val expectedNextVersion: Long = version + 1
@@ -36,11 +38,22 @@ object Aggregate {
 	}
 }
 
-object AggregateLaws {
-	def law1[A](implicit AGG: Aggregate[A]): Boolean = AGG.rehydrate(Nil) == AGG.zero
-	def law2[A](implicit AGG: Aggregate[A]): Boolean = AGG.rehydrate(Event.zeroEvent :: Nil) == AGG.zero
-	def law3[A](implicit AGG: Aggregate[A]): Boolean = AGG.newState(AGG.zero)(Event.zeroEvent) == AGG.zero
+
+trait AggregateLaws[A] {
+
+	def AGG: Aggregate[A]
+
+	def law1: Boolean = AGG.rehydrate(Nil) == AGG.zero
+	def law2: Boolean = AGG.rehydrate(Event.zeroEvent :: Nil) == AGG.zero
+	def law3: Boolean = AGG.newState(AGG.zero)(Event.zeroEvent) == AGG.zero
 }
+
+object AggregateLaws {
+	def apply[A](implicit instance: Aggregate[A]): AggregateLaws[A] = new AggregateLaws[A] {
+		def AGG: Aggregate[A] = instance
+	}
+}
+
 
 object AggregateRoot {
 
