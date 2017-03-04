@@ -14,4 +14,5 @@ final case class ShippingAddressNotValid(orderId: UUID, description: String, add
 final case class OrderClosed(orderId: UUID, description: String) extends ErrorMessage
 final case class NotEnoughItemsInTheOrder(orderId: UUID, description: String, itemId: UUID, requestedCount: Int) extends ErrorMessage
 final case class OrderAlreadyPayed(orderId: UUID, description: String) extends ErrorMessage
-final case class OrderNotComplete(orderId: UUID, description: String) extends ErrorMessage
+final case class OrderPaymentIsNotValid(orderId: UUID, description: String) extends ErrorMessage
+final case class OrderContainsNoItems(orderId: UUID, description: String) extends ErrorMessage

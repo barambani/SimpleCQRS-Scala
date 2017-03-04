@@ -7,6 +7,7 @@ import SimpleCqrsScala.CommandSide.Domain.DomainState._
 import SimpleCqrsScala.CommandSide.Printer._
 import EitherTransition._
 import scalaz.{\/, -\/, \/-}
+import Validator._
 
 import java.util.UUID
 
@@ -17,7 +18,7 @@ object InventoryItemSpec extends Specification {
 	import DomainAggregates._
 	import DomainState._
 
-	private def assertEitherState[S]: EitherState[S] => (S => Boolean) => Boolean = 
+	private def assertEitherState[S]: Validated[S] => (S => Boolean) => Boolean = 
 		es => f => es.map(f).foldRight(false){ (r, z) => z || r }
 
 	private val id = UUID.randomUUID
@@ -97,7 +98,7 @@ object InventoryItemSpec extends Specification {
   			)
 	  		
 	  		lazy val item = InventoryItem.rehydrate(history)
-	  		lazy val transition = execTransition(removeItemsFromInventory(2)(item))(item)
+	  		lazy val transition = execTransition(removeItemsFromInventory(2))(item)
 
 	  		assertEitherState(transition)(_.itemsCount == 18) mustEqual true
 	  		assertEitherState(transition)(_.version == 4) mustEqual true
@@ -113,7 +114,7 @@ object InventoryItemSpec extends Specification {
 	  		
 	  		lazy val item = InventoryItem.rehydrate(history)
 
-	  		evalTransition(removeItemsFromInventory(7)(item))(item) match {
+	  		evalTransition(removeItemsFromInventory(7))(item) match {
 	  			case \/-(ItemsRemovedFromInventory(i, c, s) :: Nil) => {
 					i mustEqual id
 					c mustEqual 7

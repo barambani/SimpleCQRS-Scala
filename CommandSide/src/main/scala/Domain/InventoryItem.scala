@@ -7,6 +7,7 @@ import monocle.macros.Lenses
 import scala.language.higherKinds
 import scalaz.{\/,-\/,\/-}
 import scalaz.Reader
+import Validator._
 
 @Lenses final case class InventoryItem private (
 	id: UUID, 
@@ -26,27 +27,34 @@ object InventoryItem {
 	def rehydrate(history: List[Event]): InventoryItem = evolve(empty)(history)
 
 	//	Commands
-	lazy val createFor: UUID => String => EitherTransition[InventoryItem] =
-		id => name => 
-			if(!theNameIsValid(name)) failedTransition(InventoryItemNameNotValid(id, None, name))
-			else 					  newTransition(Reader(_ => InventoryItemCreated(id, name, 1) :: Nil))
-
-	lazy val deactivateInventoryItem: EitherTransition[InventoryItem] = 
-		newTransition(Reader(i => InventoryItemDeactivated(i.id, i.expectedNextVersion) :: Nil))
-
-	lazy val renameInventoryItem: String => InventoryItem => EitherTransition[InventoryItem] = 
-		newName => item => 
-			if(!theNameIsValid(newName)) failedTransition(InventoryItemNameNotValid(item.id, Some(item.name), newName))
-			else 						 newTransition(Reader(i => InventoryItemRenamed(i.id, newName, i.expectedNextVersion) :: Nil))
-
-	lazy val checkInItemsToInventory: Int => EitherTransition[InventoryItem] =
-		count => newTransition(Reader(i => ItemsCheckedInToInventory(i.id, count, i.expectedNextVersion) :: Nil))
+	def createFor(id: UUID, name: String): EitherTransition[InventoryItem] =
+		newTransitionVPure(
+			validation.apply(theNameIsValid(id, None)(name)) { 
+				_ => InventoryItemCreated(id, name, 1) :: Nil
+			}
+		)
 	
-	lazy val removeItemsFromInventory: Int => InventoryItem => EitherTransition[InventoryItem] = 
-		count => item =>
-			if(!availableInStock(item)(count)) failedTransition(NotEnoughItemsInStock(item.id, item.name, count))
-			else 							   newTransition(Reader(i => ItemsRemovedFromInventory(i.id, count, i.expectedNextVersion) :: Nil))
+	def renameInventoryItem(newName: String): EitherTransition[InventoryItem] = 
+		newTransitionV(
+			item => validation.apply(theNameIsValid(item.id, Some(item.name))(newName)) { 
+				_ => InventoryItemRenamed(item.id, newName, item.expectedNextVersion) :: Nil
+			}
+		)
+	
+	def removeItemsFromInventory(count: Int): EitherTransition[InventoryItem] =
+		newTransitionV(
+			item => validation.apply(availableInStock(item)(count)) { 
+				_ => ItemsRemovedFromInventory(item.id, count, item.expectedNextVersion) :: Nil
+			}
+		) 
 
+	def checkInItemsToInventory(count: Int): EitherTransition[InventoryItem] =
+		liftStoA(item => ItemsCheckedInToInventory(item.id, count, item.expectedNextVersion) :: Nil)
+
+	def deactivateInventoryItem: EitherTransition[InventoryItem] = 
+		liftStoA(item => InventoryItemDeactivated(item.id, item.expectedNextVersion) :: Nil)
+		
+		
 	//	Aggregate Evolution
 	lazy val newState: InventoryItem => Event => InventoryItem = 
 		aggregate => event =>
@@ -79,11 +87,17 @@ object InventoryItem {
 	)
 
 	//	Validation
-	private lazy val theNameIsValid: String => Boolean = 
-		n => !n.isEmpty
+	private def theNameIsValid(id: UUID, actualName: Option[String])(name: String): Validated[String] = 
+		name.isEmpty match {
+			case true 	=> -\/(InventoryItemNameNotValid(id, actualName, name))
+			case false 	=> \/-(name)
+		}
 
-	private lazy val availableInStock: InventoryItem => Int => Boolean = 
-		i => count => i.itemsCount >= count
+	private def availableInStock(item: InventoryItem)(count: Int): Validated[Int] = 
+		item.itemsCount >= count match {
+			case true 	=> \/-(count)
+			case false 	=> -\/(NotEnoughItemsInStock(item.id, item.name, count))
+		}
 
 	//	Lenses
 	private lazy val applyName: String => Long => InventoryItem => InventoryItem =

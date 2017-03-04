@@ -48,9 +48,13 @@ object Show {
 	implicit object OrderAlreadyPayedShow extends Show[OrderAlreadyPayed] {
 		def stringFor(a: OrderAlreadyPayed): String = s"the order ${a.description} (id: ${a.orderId}) is already payed and can't be payed again"
 	}
-	implicit object OrderNotCompleteShow extends Show[OrderNotComplete] {
-		def stringFor(a: OrderNotComplete): String = 
-			s"the order ${a.description} (id: ${a.orderId}) is not payed or has an invalid shipping address, for cannot be submitted"
+	implicit object OrderNotCompleteShow extends Show[OrderPaymentIsNotValid] {
+		def stringFor(a: OrderPaymentIsNotValid): String = 
+			s"the payment for order ${a.description} (id: ${a.orderId}) is not valid"
+	}
+	implicit object OrderContainsNoItemsShow extends Show[OrderContainsNoItems] {
+		def stringFor(a: OrderContainsNoItems): String = 
+			s"the order ${a.description} (id: ${a.orderId}) contains no items"
 	}
 }
 

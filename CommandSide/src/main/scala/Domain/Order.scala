@@ -11,6 +11,8 @@ import monocle.function.all.at
 import monocle.std.map._
 import scalaz.Scalaz._
 import scalaz.Reader
+import scalaz.{\/, -\/, \/-}
+import Validator._
 
 import OrderItems._
 
@@ -22,10 +24,6 @@ object OrderItems {
 sealed trait OrderStatus extends Product with Serializable
 final case object Open extends OrderStatus
 final case object Submitted extends OrderStatus
-final case object WaitingForItems extends OrderStatus
-final case object AllItemsAvailable extends OrderStatus
-final case object Dispatched extends OrderStatus
-final case object Voided extends OrderStatus
 
 @Lenses final case class Order private (
 	id: UUID,
@@ -47,38 +45,46 @@ object Order {
 	def rehydrate(history: List[Event]): Order = evolve(empty)(history)
 
 	//	Commands
-	lazy val createFor: UUID => UUID => String => EitherTransition[Order] =
-		id => customerId => customerName => newTransition(Reader(_ => OrderCreated(id, s"Order for $customerName (id: $customerId)", 1) :: Nil))
+	def createFor(id: UUID, customerId: UUID, customerName: String): EitherTransition[Order] =
+		newTransitionA(
+			OrderCreated(id, s"Order for $customerName (id: $customerId)", 1) :: Nil
+		)
 
-	lazy val addInventoryItemToOrder: UUID => Int => Order => EitherTransition[Order] =
-		itemId => quantity => ord =>
-			if(!canBeChanged(ord)) failedTransition(OrderClosed(ord.id, ord.description))
-			else 				   newTransition(Reader(o => InventoryItemAddedToOrder(o.id, itemId, quantity, o.expectedNextVersion) :: Nil))
+	def addInventoryItemToOrder(itemId: UUID, quantity: Int): EitherTransition[Order] =
+		newTransitionV(
+			ord => validation.apply(canBeChanged(ord)) { 
+				_ => InventoryItemAddedToOrder(ord.id, itemId, quantity, ord.expectedNextVersion) :: Nil
+			}
+		)
 
-	lazy val removeInventoryItemFromOrder: UUID => Int => Order => EitherTransition[Order] = 
-		itemId => quantity => ord => 
-			if(!canBeChanged(ord)) 					   failedTransition(OrderClosed(ord.id, ord.description))
-			else if(!hasEnough(itemId)(quantity)(ord)) failedTransition(NotEnoughItemsInTheOrder(ord.id, ord.description, itemId, quantity))
-			else 												
-				newTransition(Reader(o => InventoryItemRemovedFromOrder(o.id, itemId, quantity, o.expectedNextVersion) :: Nil))
+	def removeInventoryItemFromOrder(itemId: UUID, quantity: Int): EitherTransition[Order] = 
+		newTransitionV(
+			ord => validation.apply2(canBeChanged(ord), hasEnoughItems(ord)(itemId, quantity)) { 
+				(_, _) => InventoryItemRemovedFromOrder(ord.id, itemId, quantity, ord.expectedNextVersion) :: Nil
+			}
+		)
 
-	lazy val addShippingAddressToOrder: String => Order => EitherTransition[Order] =
-		address => ord => 
-			if(!canBeChanged(ord)) 					failedTransition(OrderClosed(ord.id, ord.description))
-			else if(!shippingAddressValid(address))	failedTransition(ShippingAddressNotValid(ord.id, ord.description, address))
-			else 									newTransition(Reader(o => ShippingAddressAddedToOrder(ord.id, address, ord.expectedNextVersion) :: Nil))
+	def addShippingAddressToOrder(address: String): EitherTransition[Order] =
+		newTransitionV(
+			ord => validation.apply2(canBeChanged(ord), shippingAddressValid(ord)(address)) { 
+				(_, _) => ShippingAddressAddedToOrder(ord.id, address, ord.expectedNextVersion) :: Nil
+			}
+		)
 
-	lazy val payTheBalance: Order => EitherTransition[Order] =
-		ord =>
-			if(!canBeChanged(ord)) 		failedTransition(OrderClosed(ord.id, ord.description))
-			else if(!canBePayed(ord))	failedTransition(OrderAlreadyPayed(ord.id, ord.description))
-			else 						newTransition(Reader(o => OrderPayed(o.id, o.expectedNextVersion) :: Nil))
+	def payTheBalance: EitherTransition[Order] =
+		newTransitionV(
+			ord => validation.apply2(canBeChanged(ord), canBePayed(ord)) { 
+				(_, _) => OrderPayed(ord.id, ord.expectedNextVersion) :: Nil
+			}
+		)
 
-	lazy val submit: Order => EitherTransition[Order] = 
-		ord =>
-			if(!canBeChanged(ord)) 			failedTransition(OrderClosed(ord.id, ord.description))
-			else if(!canBeSubmitted(ord))	failedTransition(OrderNotComplete(ord.id, ord.description))
-			else 							newTransition(Reader(o => OrderSubmitted(o.id, o.expectedNextVersion) :: Nil))
+	def submit: EitherTransition[Order] = 
+		newTransitionV(
+			ord => validation.apply3(canBeChanged(ord), containsItems(ord), isPaymentValid(ord)) { 
+				(_, _, _) => OrderSubmitted(ord.id, ord.expectedNextVersion) :: Nil
+			}
+		)
+
 
 	//	Aggregate Evolution
 	lazy val newState: Order => Event => Order = 
@@ -118,30 +124,41 @@ object Order {
 	)
 
 	//	Validation
-	private lazy val hasEnough: UUID => Int => Order => Boolean = 
-		itemId => quantity => ord => (ord.items get itemId).fold(false){ _ >= quantity }
+	private def canBeChanged(ord: Order): Validated[Order] = 
+		ord.status match {
+			case Open	=> \/-(ord)
+			case _	 	=> -\/(OrderClosed(ord.id, ord.description))
+		}
 
-	private lazy val canBeChanged: Order => Boolean = 
-		ord => ord.status == Open
+	private def shippingAddressValid(ord: Order)(shippingAddress: String): Validated[String] = 
+		shippingAddress.isEmpty match {
+			case true 	=> -\/(ShippingAddressNotValid(ord.id, ord.description, shippingAddress))
+			case false 	=> \/-(shippingAddress)
+		}
 
-	private lazy val shippingAddressValid: String => Boolean = 
-		shippingAddress => !shippingAddress.isEmpty
+	private def hasEnoughItems(ord: Order)(itemId: UUID, quantity: Int): Validated[(UUID, Int)] = 
+		(ord.items get itemId).fold(false){ _ >= quantity } match {
+			case true 	=> \/-((itemId, quantity))
+			case false 	=> -\/(NotEnoughItemsInTheOrder(ord.id, ord.description, itemId, quantity))
+		}
 
-	private lazy val canBePayed: Order => Boolean = 
-		ord => !ord.isPayed
+	private def isPaymentValid(ord: Order): Validated[Order] = 
+		ord.isPayed match {
+			case true 	=> \/-(ord)
+			case false 	=> -\/(OrderPaymentIsNotValid(ord.id, ord.description))
+		}
 
-	private lazy val canBeSubmitted: Order => Boolean = 
-		ord => ord.isPayed && shippingAddressValid(ord.shippingAddress)
+	private def canBePayed(ord: Order): Validated[Order] = 
+		ord.isPayed match {
+			case false 	=> \/-(ord)
+			case true 	=> -\/(OrderAlreadyPayed(ord.id, ord.description))
+		}
 
-	private lazy val canBeDispatched: Order => Boolean = 
-		ord => (
-			ord.status == AllItemsAvailable 
-			&& ord.isPayed 
-			&& shippingAddressValid(ord.shippingAddress)
-		)
-
-	private lazy val canBeVoided: Order => Boolean = 
-		ord => ord.status != Dispatched
+	private def containsItems(ord: Order): Validated[Order] =
+		ord.items.isEmpty match {
+			case false 	=> \/-(ord)
+			case true 	=> -\/(OrderContainsNoItems(ord.id, ord.description))
+		}
 
 	//	Lenses
 	private lazy val applyAddress: String => Long => Order => Order =
