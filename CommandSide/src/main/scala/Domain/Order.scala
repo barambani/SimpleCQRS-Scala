@@ -46,40 +46,40 @@ object Order {
 
 	//	Commands
 	def createFor(id: UUID, customerId: UUID, customerName: String): EitherTransition[Order] =
-		newTransitionA(
+		liftEvents(
 			OrderCreated(id, s"Order for $customerName (id: $customerId)", 1) :: Nil
 		)
 
 	def addInventoryItemToOrder(itemId: UUID, quantity: Int): EitherTransition[Order] =
-		newTransitionV(
+		liftValidatedF(
 			ord => validation.apply(canBeChanged(ord)) { 
 				_ => InventoryItemAddedToOrder(ord.id, itemId, quantity, ord.expectedNextVersion) :: Nil
 			}
 		)
 
 	def removeInventoryItemFromOrder(itemId: UUID, quantity: Int): EitherTransition[Order] = 
-		newTransitionV(
+		liftValidatedF(
 			ord => validation.apply2(canBeChanged(ord), hasEnoughItems(ord)(itemId, quantity)) { 
 				(_, _) => InventoryItemRemovedFromOrder(ord.id, itemId, quantity, ord.expectedNextVersion) :: Nil
 			}
 		)
 
 	def addShippingAddressToOrder(address: String): EitherTransition[Order] =
-		newTransitionV(
+		liftValidatedF(
 			ord => validation.apply2(canBeChanged(ord), shippingAddressValid(ord)(address)) { 
 				(_, _) => ShippingAddressAddedToOrder(ord.id, address, ord.expectedNextVersion) :: Nil
 			}
 		)
 
 	def payTheBalance: EitherTransition[Order] =
-		newTransitionV(
+		liftValidatedF(
 			ord => validation.apply2(canBeChanged(ord), canBePayed(ord)) { 
 				(_, _) => OrderPayed(ord.id, ord.expectedNextVersion) :: Nil
 			}
 		)
 
 	def submit: EitherTransition[Order] = 
-		newTransitionV(
+		liftValidatedF(
 			ord => validation.apply3(canBeChanged(ord), containsItems(ord), isPaymentValid(ord)) { 
 				(_, _, _) => OrderSubmitted(ord.id, ord.expectedNextVersion) :: Nil
 			}

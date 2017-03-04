@@ -28,32 +28,32 @@ object InventoryItem {
 
 	//	Commands
 	def createFor(id: UUID, name: String): EitherTransition[InventoryItem] =
-		newTransitionVPure(
+		liftValidated(
 			validation.apply(theNameIsValid(id, None)(name)) { 
 				_ => InventoryItemCreated(id, name, 1) :: Nil
 			}
 		)
 	
 	def renameInventoryItem(newName: String): EitherTransition[InventoryItem] = 
-		newTransitionV(
+		liftValidatedF(
 			item => validation.apply(theNameIsValid(item.id, Some(item.name))(newName)) { 
 				_ => InventoryItemRenamed(item.id, newName, item.expectedNextVersion) :: Nil
 			}
 		)
 	
 	def removeItemsFromInventory(count: Int): EitherTransition[InventoryItem] =
-		newTransitionV(
+		liftValidatedF(
 			item => validation.apply(availableInStock(item)(count)) { 
 				_ => ItemsRemovedFromInventory(item.id, count, item.expectedNextVersion) :: Nil
 			}
 		) 
 
 	def checkInItemsToInventory(count: Int): EitherTransition[InventoryItem] =
-		liftStoA(item => ItemsCheckedInToInventory(item.id, count, item.expectedNextVersion) :: Nil)
+		liftEventsF(item => ItemsCheckedInToInventory(item.id, count, item.expectedNextVersion) :: Nil)
 
 	def deactivateInventoryItem: EitherTransition[InventoryItem] = 
-		liftStoA(item => InventoryItemDeactivated(item.id, item.expectedNextVersion) :: Nil)
-		
+		liftEventsF(item => InventoryItemDeactivated(item.id, item.expectedNextVersion) :: Nil)
+
 		
 	//	Aggregate Evolution
 	lazy val newState: InventoryItem => Event => InventoryItem = 
