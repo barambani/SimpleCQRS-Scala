@@ -3,13 +3,13 @@ package SimpleCqrsScala.CommandSide.Test
 import java.util.UUID
 import org.specs2.mutable._
 import scala.collection.mutable._
-import SimpleCqrsScala.CommandSide.Domain._
-import SimpleCqrsScala.CommandSide._
+import SimpleCqrsScala.CommandSide.Domain.Commands._
+import SimpleCqrsScala.CommandSide.Domain.Events._
+import SimpleCqrsScala.CommandSide.Repository._
+import SimpleCqrsScala.CommandSide.CommandHandler._
+import SimpleCqrsScala.CommandSide.DomainCommandHandlers._
 import scalaz.ReaderT
-import Repository._
 import scalaz.concurrent.Task
-import CommandHandler._
-import DomainCommandHandlers._
 
 object CommandHandlerSpec extends Specification {
 

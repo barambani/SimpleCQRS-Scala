@@ -1,6 +1,8 @@
 package SimpleCqrsScala.CommandSide
 
-import SimpleCqrsScala.CommandSide.Domain._
+import SimpleCqrsScala.CommandSide.Domain.Events._
+import SimpleCqrsScala.CommandSide.Domain.Events.Event._
+import SimpleCqrsScala.CommandSide.Domain.Errors._
 
 trait Show[A] {
 	def stringFor(a: A): String

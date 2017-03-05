@@ -1,16 +1,21 @@
 package SimpleCqrsScala.CommandSide
 
 import java.util.UUID
-import SimpleCqrsScala.CommandSide._
-import SimpleCqrsScala.CommandSide.Domain._
-import scalaz.Reader
-import scalaz.\/
-import Repository._
-import DomainState._
-import EitherTransition._
-import scalaz.concurrent.Task
 import SimpleCqrsScala.CommandSide.Domain.InventoryItem._
 import SimpleCqrsScala.CommandSide.Domain.Order._
+import SimpleCqrsScala.CommandSide.Domain.Errors._
+import SimpleCqrsScala.CommandSide.Domain.Events._
+import SimpleCqrsScala.CommandSide.Domain.Commands._
+import SimpleCqrsScala.CommandSide.Domain.Events.Event._
+import SimpleCqrsScala.CommandSide.Domain.DomainState._
+import SimpleCqrsScala.CommandSide.Domain.DomainState.EitherTransition._
+import SimpleCqrsScala.CommandSide.Repository._
+import SimpleCqrsScala.CommandSide.Domain.Aggregate
+import SimpleCqrsScala.CommandSide.Services.OrderService
+import SimpleCqrsScala.CommandSide.Services.InventoryItemService
+import scalaz.Reader
+import scalaz.\/
+import scalaz.concurrent.Task
 
 object CommandHandler {
 
@@ -39,15 +44,15 @@ object CommandHandler {
 	}
 }
 
-object DomainCommandHandlers {
+object DomainCommandHandlers extends OrderService with InventoryItemService {
 
 	import CommandHandler._
 	import Handler._
-	import DomainAggregates._
+	import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
 
 	implicit object CreateInventoryItemH extends Handler[CreateInventoryItem] {
 		def handle(c: CreateInventoryItem): CommandEffect = 
-			initialEffectOf(InventoryItem.createFor(c.id, c.name))
+			initialEffectOf(createItemFor(c.id, c.name))
 	}
 	
 	implicit object DeactivateInventoryItemH extends Handler[DeactivateInventoryItem] {
@@ -74,7 +79,7 @@ object DomainCommandHandlers {
 
 	implicit object CreateOrderH extends Handler[CreateOrder] {
 		def handle(c: CreateOrder): CommandEffect = 
-			initialEffectOf(Order.createFor(c.id, c.customerId, c.customerName))
+			initialEffectOf(createOrderFor(c.id, c.customerId, c.customerName))
 	}
 
 	implicit object AddInventoryItemToOrderH extends Handler[AddInventoryItemToOrder] {

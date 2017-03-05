@@ -1,7 +1,8 @@
 package SimpleCqrsScala.CommandSide.Domain
 
 import java.util.UUID
-import SimpleCqrsScala.CommandSide._
+import Events._
+import Events.Event._
 import scala.annotation._
 
 import scala.language.higherKinds

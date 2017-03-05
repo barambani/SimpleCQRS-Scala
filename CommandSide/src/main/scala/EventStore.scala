@@ -4,6 +4,7 @@ import SimpleCqrsScala.CommandSide.Domain._
 import java.util.UUID
 import scalaz.ReaderT
 import scalaz.concurrent.Task
+import SimpleCqrsScala.CommandSide.Domain.Events._
 
 object Repository {
 

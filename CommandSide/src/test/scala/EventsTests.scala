@@ -1,14 +1,11 @@
 package SimpleCqrsScala.CommandSide.Test
 
 import org.specs2.mutable._
-import SimpleCqrsScala.CommandSide._
-import SimpleCqrsScala.CommandSide.Domain._
-
+import SimpleCqrsScala.CommandSide.Domain.Events._
+import SimpleCqrsScala.CommandSide.Printer._
 import java.util.UUID
 
 object EventSpec extends Specification {
-
-  import Printer._
 
 	val id = UUID.randomUUID
 

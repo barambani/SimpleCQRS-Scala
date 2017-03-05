@@ -1,22 +1,22 @@
 package SimpleCqrsScala.CommandSide.Test
 
 import org.specs2.mutable._
-import SimpleCqrsScala.CommandSide._
-import SimpleCqrsScala.CommandSide.Domain._
-import SimpleCqrsScala.CommandSide.Domain.DomainState._
+import SimpleCqrsScala.CommandSide.Domain.Events._
+import SimpleCqrsScala.CommandSide.Domain.Validator._
+import SimpleCqrsScala.CommandSide.Domain.DomainState.EitherTransition._
 import SimpleCqrsScala.CommandSide.Printer._
-import EitherTransition._
+import SimpleCqrsScala.CommandSide.Domain.InventoryItem
+import SimpleCqrsScala.CommandSide.Domain.AggregateRoot._
+import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
+import SimpleCqrsScala.CommandSide.Domain.DomainState._
+import SimpleCqrsScala.CommandSide.Services.InventoryItemService
+
+
 import scalaz.{\/, -\/, \/-}
-import Validator._
 
 import java.util.UUID
 
-object InventoryItemSpec extends Specification {
-
-	import InventoryItem._
-	import AggregateRoot._
-	import DomainAggregates._
-	import DomainState._
+object InventoryItemSpec extends Specification with InventoryItemService {
 
 	private def assertEitherState[S]: Validated[S] => (S => Boolean) => Boolean = 
 		es => f => es.map(f).foldRight(false){ (r, z) => z || r }

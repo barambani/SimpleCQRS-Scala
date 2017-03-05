@@ -1,6 +1,8 @@
 package SimpleCqrsScala.CommandSide.Domain
 
 import SimpleCqrsScala.CommandSide._
+import SimpleCqrsScala.CommandSide.Domain.Events._
+import SimpleCqrsScala.CommandSide.Domain.Errors._
 import scalaz.StateT
 import scalaz.State
 import scalaz.Monad
