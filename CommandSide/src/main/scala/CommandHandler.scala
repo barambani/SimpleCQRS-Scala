@@ -46,8 +46,8 @@ object CommandHandler {
 
 object DomainCommandHandlers extends OrderService with InventoryItemService {
 
-	import CommandHandler._
-	import Handler._
+	import SimpleCqrsScala.CommandSide.CommandHandler._
+	import SimpleCqrsScala.CommandSide.CommandHandler.Handler._
 	import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
 
 	implicit object CreateInventoryItemH extends Handler[CreateInventoryItem] {
