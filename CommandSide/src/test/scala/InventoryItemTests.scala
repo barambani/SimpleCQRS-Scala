@@ -16,7 +16,7 @@ import scalaz.{\/, -\/, \/-}
 
 import java.util.UUID
 
-object InventoryItemSpec extends Specification with InventoryItemService {
+object InventoryItemTests extends Specification with InventoryItemService {
 
 	private def assertEitherState[S]: Validated[S] => (S => Boolean) => Boolean = 
 		es => f => es.map(f).foldRight(false){ (r, z) => z || r }
