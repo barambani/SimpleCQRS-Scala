@@ -7,7 +7,7 @@ import SimpleCqrsScala.CommandSide.Domain._
 import DomainAggregates._
 import AggregateLaws._
 
-abstract class AggreagateLawsChecks[A](name: String)(implicit AGG: Aggregate[A]) extends Specification {
+abstract class AggreagateLawsTests[A](name: String)(implicit AGG: Aggregate[A]) extends Specification {
 
 	lazy val laws = AggregateLaws[A]
 
@@ -26,5 +26,5 @@ abstract class AggreagateLawsChecks[A](name: String)(implicit AGG: Aggregate[A])
 	}
 }
 
-object InventoryItemLawsTests extends AggreagateLawsChecks[InventoryItem]("InventoryItem")
-object OrderLawsTests extends AggreagateLawsChecks[Order]("Order")
+object InventoryItemLawsTests extends AggreagateLawsTests[InventoryItem]("InventoryItem")
+object OrderLawsTests extends AggreagateLawsTests[Order]("Order")

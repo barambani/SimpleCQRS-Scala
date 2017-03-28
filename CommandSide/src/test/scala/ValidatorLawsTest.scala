@@ -15,7 +15,7 @@ import scala.language.higherKinds
 import EqualImplicits._
 import ArbitraryImplicits._
 
-abstract class ApplicativeLawsTest[F[_]](name: String)(implicit 
+abstract class ApplicativeLawsTests[F[_]](name: String)(implicit 
 	AF:	 Applicative[F], 
 	EQI: Equal[F[Int]], 
 	EQS: Equal[F[String]],
@@ -40,4 +40,4 @@ abstract class ApplicativeLawsTest[F[_]](name: String)(implicit
 	}
 }
 
-object ValidatorLawsTest extends ApplicativeLawsTest[Validated]("Validated")
+object ValidatorLawsTests extends ApplicativeLawsTests[Validated]("Validated")

@@ -5,7 +5,7 @@ import SimpleCqrsScala.CommandSide.Domain.Events._
 import SimpleCqrsScala.CommandSide.Printer._
 import java.util.UUID
 
-object EventSpec extends Specification {
+object EventTests extends Specification {
 
 	val id = UUID.randomUUID
 

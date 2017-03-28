@@ -11,7 +11,7 @@ import SimpleCqrsScala.CommandSide.DomainCommandHandlers._
 import scalaz.ReaderT
 import scalaz.concurrent.Task
 
-object CommandHandlerSpec extends Specification {
+object CommandHandlerTests extends Specification {
 
 	val id = UUID.randomUUID
 	val history = List(

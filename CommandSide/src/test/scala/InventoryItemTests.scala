@@ -1,6 +1,7 @@
 package SimpleCqrsScala.CommandSide.Test
 
 import org.specs2.mutable._
+
 import SimpleCqrsScala.CommandSide.Domain.Events._
 import SimpleCqrsScala.CommandSide.Domain.Validator._
 import SimpleCqrsScala.CommandSide.Domain.DomainState.EitherTransition._

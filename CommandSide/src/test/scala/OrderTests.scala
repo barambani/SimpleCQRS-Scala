@@ -7,7 +7,7 @@ import SimpleCqrsScala.CommandSide.Domain.Events._
 
 import java.util.UUID
 
-object OrderSpec extends Specification {
+object OrderTests extends Specification {
 
 	val orderId = UUID.randomUUID
 	val inventoryItemId1 = UUID.randomUUID
