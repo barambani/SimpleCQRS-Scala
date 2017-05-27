@@ -60,24 +60,4 @@ object DomainState {
 
 		} yield events
 	}
-
-	// def mergeTransitions[A](transitions: Seq[StateTransition[A]]): StateTransition[A] = {
-
-	// 	def mergeSingleTransition[A](t: StateTransition[A], curr: StateTransition[A]): StateTransition[A] = State { 
-	// 		(s: A) => {
-	// 			lazy val (currS, currT) = curr.run(s)
-	// 			lazy val (tS, tT) = t.run(currS)
-	// 			(tS, tT ::: currT)
-	// 		}
-	// 	}
-
-	// 	(transitions foldRight zeroTransition[A]) ((t,curr) => mergeSingleTransition(t, curr))
-	// }
-
-
-	// def execTransitions[A]: Seq[StateTransition[A]] => A => A = 
-	// 	trns => st => mergeTransitions(trns) exec st
-
-	// def evalTransitions[A]: Seq[StateTransition[A]] => A => List[Event] = 
-	// 	trns => st => mergeTransitions(trns) eval st
 }

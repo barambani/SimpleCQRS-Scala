@@ -15,44 +15,44 @@ import scalaz.Scalaz._
 trait OrderService {
 
 	def createOrderFor(id: UUID, customerId: UUID, customerName: String): EitherTransition[Order] =
-		liftEvents(
+		liftEvents{
 			OrderCreated(id, s"Order for $customerName (id: $customerId)", 1) :: Nil
-		)
+		}
 
 	def addInventoryItemToOrder(itemId: UUID, quantity: Int): EitherTransition[Order] =
-		liftValidatedF(
-			ord => validation.apply(canBeChanged(ord)) { 
+		liftValidatedF {
+			ord => canBeChanged(ord) map { 
 				_ => InventoryItemAddedToOrder(ord.id, itemId, quantity, ord.expectedNextVersion) :: Nil
 			}
-		)
+		}
 
 	def removeInventoryItemFromOrder(itemId: UUID, quantity: Int): EitherTransition[Order] = 
-		liftValidatedF(
-			ord => validation.apply2(canBeChanged(ord), hasEnoughItems(ord)(itemId, quantity)) { 
+		liftValidatedF {
+			ord => (canBeChanged(ord) |@| hasEnoughItems(ord)(itemId, quantity)) { 
 				(_, _) => InventoryItemRemovedFromOrder(ord.id, itemId, quantity, ord.expectedNextVersion) :: Nil
 			}
-		)
+		}
 
 	def addShippingAddressToOrder(address: String): EitherTransition[Order] =
-		liftValidatedF(
-			ord => validation.apply2(canBeChanged(ord), shippingAddressValid(ord)(address)) { 
+		liftValidatedF {
+			ord => (canBeChanged(ord) |@| shippingAddressValid(ord)(address)) { 
 				(_, _) => ShippingAddressAddedToOrder(ord.id, address, ord.expectedNextVersion) :: Nil
 			}
-		)
+		}
 
 	def payTheBalance: EitherTransition[Order] =
-		liftValidatedF(
-			ord => validation.apply2(canBeChanged(ord), canBePayed(ord)) { 
+		liftValidatedF {
+			ord => (canBeChanged(ord) |@| canBePayed(ord)) { 
 				(_, _) => OrderPayed(ord.id, ord.expectedNextVersion) :: Nil
 			}
-		)
+		}
 
 	def submit: EitherTransition[Order] = 
-		liftValidatedF(
-			ord => validation.apply3(canBeChanged(ord), containsItems(ord), isPaymentValid(ord)) { 
+		liftValidatedF {
+			ord => (canBeChanged(ord) |@| containsItems(ord) |@| isPaymentValid(ord)) { 
 				(_, _, _) => OrderSubmitted(ord.id, ord.expectedNextVersion) :: Nil
 			}
-		)
+		}
 
 
 	//	Validation
@@ -91,5 +91,4 @@ trait OrderService {
 			case false 	=> succeeded(ord)
 			case true 	=> failedWith(OrderContainsNoItems(ord.id, ord.description))
 		}
-
 }
