@@ -1,6 +1,9 @@
+inThisBuild(Seq(
+  scalaOrganization := "org.typelevel",
+  scalaVersion := "2.12.2-bin-typelevel-4"
+))
+
 lazy val prjcSettings = Seq (
-	scalaVersion := "2.12.1",
-	scalaOrganization in ThisBuild := "org.typelevel",
 	version := "0.0.1",
 	name := "QuerySide"
 )
