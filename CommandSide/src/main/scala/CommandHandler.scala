@@ -38,10 +38,10 @@ object CommandHandler {
 			transitionAfterState(t)(Aggregate[S].rehydrate(h))
 
 		def initialEffectOf[S: Aggregate](t: EitherTransition[S]): CommandEffect = 
-			Reader{ _ => transitionAfterHistory[S](t)(Nil) }
+			Reader { _ => transitionAfterHistory[S](t)(Nil) }
 
 		def effectFor[S: Aggregate](t: EitherTransition[S])(id: UUID): CommandEffect = 
-			Reader{ q => (q andThenK transitionAfterHistory(t)).run(id) }
+			Reader { q => (q andThenK transitionAfterHistory(t)).run(id) }
 	}
 }
 

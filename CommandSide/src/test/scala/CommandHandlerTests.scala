@@ -8,13 +8,15 @@ import SimpleCqrsScala.CommandSide.Domain.Events._
 import SimpleCqrsScala.CommandSide.Repository._
 import SimpleCqrsScala.CommandSide.CommandHandler._
 import SimpleCqrsScala.CommandSide.DomainCommandHandlers._
+import SimpleCqrsScala.CommandSide.Printer._
 import scalaz.ReaderT
 import scalaz.concurrent.Task
+import scalaz.{\/-, -\/}
 
-object CommandHandlerTests extends Specification {
+sealed trait CommandHandlerStubs {
 
-	val id = UUID.randomUUID
-	val history = List(
+	lazy val id = UUID.randomUUID
+	lazy val inventoryItemHistory = List(
 		UnknownHappened(id, 6),
 		ItemsRemovedFromInventory(id, 4, 5),
 		ItemsRemovedFromInventory(id, 3, 4),
@@ -23,19 +25,30 @@ object CommandHandlerTests extends Specification {
 		InventoryItemCreated(id, "First Inventory Item Name", 1)
 	)
 	
-	lazy val eventStoreQuery: Query = 
-		ReaderT(_ => Task.now(history))
-	
-	def handleWithSideEffect[C](c: C)(implicit CH: Handler[C]): Result = 
-		CH.handle(c).run(eventStoreQuery).unsafePerformSync
+	lazy val inventoryItemQuery: Query = 
+		ReaderT { _ => Task.now(inventoryItemHistory) }
 
+	lazy val orderQuery: Query = 
+		ReaderT { 
+			_ => Task.now { List(OrderCreated(id, "Test Order", 1)) }
+		}
+
+	def handleInTest[C](command: C, q: Query)(implicit CH: Handler[C]): Result = 
+		CH.handle(command).run(q).unsafePerformSync
+}
+
+object CommandHandlerTests extends Specification with CommandHandlerStubs {
+	
 	"The Command Handler" should {
 
 	  	"return an InventoryItemCreated event when receives the command CreateInventoryItem" in {
 
 	  		val expectedName = "test-create-command"
 
-  			lazy val evolution = handleWithSideEffect(CreateInventoryItem(id, expectedName))
+  			lazy val evolution = handleInTest(
+  				CreateInventoryItem(id, expectedName),
+  				inventoryItemQuery
+  			)
 
 			evolution.toOption match {
 				case Some(InventoryItemCreated(eid,name,sequence) :: xs) => {
@@ -51,20 +64,28 @@ object CommandHandlerTests extends Specification {
 
 	  		val expectedName = "new item name"
 
-	  		lazy val evolution = handleWithSideEffect(RenameInventoryItem(id, expectedName))
+	  		lazy val evolution = handleInTest(
+	  			RenameInventoryItem(id, expectedName),
+				inventoryItemQuery
+	  		)
 			
 			evolution.toOption match {
-				case Some(InventoryItemRenamed(eid,newName,sequence) :: xs) => newName mustEqual expectedName
+				case Some(InventoryItemRenamed(eid,newName,sequence) :: xs) => {
+					eid mustEqual id
+					newName mustEqual expectedName
+				}
 				case _ => ko("The event saved into store is not correct")
 			}
 	  	}
 
 	  	"return an ItemsCheckedInToInventory when receives the CheckInItemsToInventory command" in {
 
-	  		val id = UUID.randomUUID
 	  		val expectedCheckedInCount = 4
 
-  			lazy val evolution = handleWithSideEffect(CheckInItemsToInventory(id, expectedCheckedInCount))
+  			lazy val evolution = handleInTest(
+  				CheckInItemsToInventory(id, expectedCheckedInCount),
+  				inventoryItemQuery
+  			)
   			
   			evolution.toOption match {
 				case Some(ItemsCheckedInToInventory(eid,count,sequence) :: xs) => count mustEqual expectedCheckedInCount
@@ -74,10 +95,12 @@ object CommandHandlerTests extends Specification {
 
 	  	"return an RemoveItemsFromInventory when receives the RemoveItemsFromInventory command" in {
 
-	  		val id = UUID.randomUUID
 	  		val expectedCheckedInCount = 3
 
-  			lazy val evolution = handleWithSideEffect(RemoveItemsFromInventory(id, expectedCheckedInCount))
+  			lazy val evolution = handleInTest(
+  				RemoveItemsFromInventory(id, expectedCheckedInCount),
+  				inventoryItemQuery
+  			)
   			
   			evolution.toOption match {
 				case Some(ItemsRemovedFromInventory(eid,count,sequence) :: xs) => count mustEqual expectedCheckedInCount
@@ -87,16 +110,32 @@ object CommandHandlerTests extends Specification {
 
 	  	"return an InventoryItemAddedToOrder when receives the AddInventoryItemToOrder command" in {
 
-	  		val id = UUID.randomUUID
 	  		val customerId = UUID.randomUUID
 	  		val expectedItemsOfId = 12
 
-  			lazy val evolution = handleWithSideEffect(AddInventoryItemToOrder(id, customerId, expectedItemsOfId))
+  			lazy val evolution = handleInTest(
+  				AddInventoryItemToOrder(id, customerId, expectedItemsOfId),
+  				inventoryItemQuery
+  			)
   			
-  			evolution.toOption match {
-				case Some(InventoryItemAddedToOrder(id, inventoryItemId, quantity, sequence) :: xs) => quantity mustEqual expectedItemsOfId
+  			evolution match {
+				case \/-(InventoryItemAddedToOrder(id, inventoryItemId, quantity, sequence) :: xs) => quantity mustEqual expectedItemsOfId
+				case -\/(es) => ko("The event saved into store is not correct: Errors -> $es")
 				case _ => ko("The event saved into store is not correct")
 			}
+	  	}
+
+	  	"return an error trying to add an empty shipping address to the order" in {
+
+  			lazy val evolution = handleInTest(
+  				AddShippingAddressToOrder(id, ""),
+  				orderQuery
+  			)
+
+  			evolution.fold (
+  				es 	=> show(es) mustEqual s"the shipping address '' proposed for the order 'Test Order' (id: ${id}) is not valid",
+  				_	=> ko("The order shouldn't accept empty shipping address") 
+  			)
 	  	}
   	}
 }

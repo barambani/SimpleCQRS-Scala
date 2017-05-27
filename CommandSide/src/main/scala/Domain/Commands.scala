@@ -15,11 +15,7 @@ object Commands {
 	final case class AddShippingAddressToOrder(id: UUID, shippingAddress: String) extends Command
 	final case class PayForTheOrder(id: UUID) extends Command
 	final case class SubmitTheOrder(id: UUID) extends Command
-	final case class MarkOrderItemOutOfStock(id: UUID, inventoryItemId: UUID, quantity: Int) extends Command
-	final case class MarkOrderItemInStock(id: UUID, inventoryItemId: UUID, quantity: Int) extends Command
-	final case class DispatchTheOrder(id: UUID) extends Command
-	final case class VoidTheOrder(id: UUID, reason: String) extends Command
-
+	
 	//	Inventory Item
 	final case class CreateInventoryItem(id: UUID, name: String) extends Command
 	final case class DeactivateInventoryItem(id: UUID) extends Command

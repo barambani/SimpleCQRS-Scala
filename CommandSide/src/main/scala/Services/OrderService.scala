@@ -9,7 +9,6 @@ import SimpleCqrsScala.CommandSide.Domain.DomainState._
 import SimpleCqrsScala.CommandSide.Domain.DomainState.EitherTransition._
 import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
 import java.util.UUID
-import scalaz.Validation._
 import scalaz.Scalaz._
 
 trait OrderService {

@@ -15,7 +15,7 @@ import AggregateRoot._
 
 object DomainState {
 	
-	type EitherTransition[S]   = StateT[Validated, S, List[Event]]
+	type EitherTransition[S] = StateT[Validated, S, List[Event]]
 	
 	object EitherTransition {
 
@@ -36,9 +36,6 @@ object DomainState {
 
 		def liftValidatedF[S: Aggregate](fVe: S => Validated[List[Event]]): EitherTransition[S] = 
 			apply(s => fVe(s) map (stateFor(_).run(s)))
-
-		def liftError[S: Aggregate, ER <: ErrorMessage](e: -\/[ER]): EitherTransition[S] =
-			apply(_ => e leftMap { NonEmptyList(_) })
 		
 
 		def execTransition[S: Aggregate](eT: EitherTransition[S])(aState: S): Validated[S] =
