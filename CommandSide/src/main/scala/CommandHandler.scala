@@ -15,11 +15,12 @@ import SimpleCqrsScala.CommandSide.Services.OrderService
 import SimpleCqrsScala.CommandSide.Services.InventoryItemService
 import scalaz.Reader
 import scalaz.\/
+import scalaz.NonEmptyList
 import scalaz.concurrent.Task
 
 object CommandHandler {
 
-	type Result 		= \/[ErrorMessage, List[Event]]
+	type Result 		= \/[NonEmptyList[ErrorMessage], List[Event]]
 	type CommandEffect	= Reader[Query, Task[Result]]
 
 	trait Handler[C] {

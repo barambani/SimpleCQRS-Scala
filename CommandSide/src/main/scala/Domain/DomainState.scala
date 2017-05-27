@@ -8,6 +8,7 @@ import scalaz.State
 import scalaz.Monad
 import scalaz.Reader
 import scalaz.{\/, -\/, \/-}
+import scalaz.NonEmptyList
 import Validator._
 
 import AggregateRoot._
@@ -37,13 +38,13 @@ object DomainState {
 			apply(s => fVe(s) map (stateFor(_).run(s)))
 
 		def liftError[S: Aggregate, ER <: ErrorMessage](e: -\/[ER]): EitherTransition[S] =
-			apply(_ => e)
+			apply(_ => e leftMap { NonEmptyList(_) })
 		
 
-		def execTransition[S: Aggregate](eT: EitherTransition[S])(aState: S): \/[ErrorMessage, S] =
+		def execTransition[S: Aggregate](eT: EitherTransition[S])(aState: S): Validated[S] =
 			eT.exec(aState)
 
-		def evalTransition[S: Aggregate](eT: EitherTransition[S])(aState: S): \/[ErrorMessage, List[Event]] = 
+		def evalTransition[S: Aggregate](eT: EitherTransition[S])(aState: S): Validated[List[Event]] = 
 			eT.eval(aState)
 
 

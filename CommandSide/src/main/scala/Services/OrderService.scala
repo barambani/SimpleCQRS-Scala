@@ -9,7 +9,8 @@ import SimpleCqrsScala.CommandSide.Domain.DomainState._
 import SimpleCqrsScala.CommandSide.Domain.DomainState.EitherTransition._
 import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
 import java.util.UUID
-import scalaz.{\/, -\/, \/-}
+import scalaz.Validation._
+import scalaz.Scalaz._
 
 trait OrderService {
 
@@ -57,38 +58,38 @@ trait OrderService {
 	//	Validation
 	private def canBeChanged(ord: Order): Validated[Order] = 
 		ord.status match {
-			case Open	=> \/-(ord)
-			case _	 	=> -\/(OrderClosed(ord.id, ord.description))
+			case Open	=> succeeded(ord)
+			case _	 	=> failedWith(OrderClosed(ord.id, ord.description))
 		}
 
 	private def shippingAddressValid(ord: Order)(shippingAddress: String): Validated[String] = 
 		shippingAddress.isEmpty match {
-			case true 	=> -\/(ShippingAddressNotValid(ord.id, ord.description, shippingAddress))
-			case false 	=> \/-(shippingAddress)
+			case true 	=> failedWith(ShippingAddressNotValid(ord.id, ord.description, shippingAddress))
+			case false 	=> succeeded(shippingAddress)
 		}
 
 	private def hasEnoughItems(ord: Order)(itemId: UUID, quantity: Int): Validated[(UUID, Int)] = 
 		(ord.items get itemId).fold(false){ _ >= quantity } match {
-			case true 	=> \/-((itemId, quantity))
-			case false 	=> -\/(NotEnoughItemsInTheOrder(ord.id, ord.description, itemId, quantity))
+			case true 	=> succeeded((itemId, quantity))
+			case false 	=> failedWith(NotEnoughItemsInTheOrder(ord.id, ord.description, itemId, quantity))
 		}
 
 	private def isPaymentValid(ord: Order): Validated[Order] = 
 		ord.isPayed match {
-			case true 	=> \/-(ord)
-			case false 	=> -\/(OrderPaymentIsNotValid(ord.id, ord.description))
+			case true 	=> succeeded(ord)
+			case false 	=> failedWith(OrderPaymentIsNotValid(ord.id, ord.description))
 		}
 
 	private def canBePayed(ord: Order): Validated[Order] = 
 		ord.isPayed match {
-			case false 	=> \/-(ord)
-			case true 	=> -\/(OrderAlreadyPayed(ord.id, ord.description))
+			case false 	=> succeeded(ord)
+			case true 	=> failedWith(OrderAlreadyPayed(ord.id, ord.description))
 		}
 
 	private def containsItems(ord: Order): Validated[Order] =
 		ord.items.isEmpty match {
-			case false 	=> \/-(ord)
-			case true 	=> -\/(OrderContainsNoItems(ord.id, ord.description))
+			case false 	=> succeeded(ord)
+			case true 	=> failedWith(OrderContainsNoItems(ord.id, ord.description))
 		}
 
 }

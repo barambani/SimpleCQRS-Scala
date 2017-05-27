@@ -8,7 +8,6 @@ import SimpleCqrsScala.CommandSide.Domain.DomainState._
 import SimpleCqrsScala.CommandSide.Domain.DomainState.EitherTransition._
 import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
 import java.util.UUID
-import scalaz.{\/, -\/, \/-}
 
 trait InventoryItemService {
 
@@ -43,14 +42,13 @@ trait InventoryItemService {
 	//	Validation
 	private def theNameIsValid(id: UUID, actualName: Option[String])(name: String): Validated[String] = 
 		name.isEmpty match {
-			case true 	=> -\/(InventoryItemNameNotValid(id, actualName, name))
-			case false 	=> \/-(name)
+			case true 	=> failedWith(InventoryItemNameNotValid(id, actualName, name))
+			case false 	=> succeeded(name)
 		}
 
 	private def availableInStock(item: InventoryItem)(count: Int): Validated[Int] = 
 		item.itemsCount >= count match {
-			case true 	=> \/-(count)
-			case false 	=> -\/(NotEnoughItemsInStock(item.id, item.name, count))
+			case true 	=> succeeded(count)
+			case false 	=> failedWith(NotEnoughItemsInStock(item.id, item.name, count))
 		}
-
 }
