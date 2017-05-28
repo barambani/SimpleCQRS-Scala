@@ -7,12 +7,12 @@ import SimpleCqrsScala.CommandSide.Domain.Events._
 import SimpleCqrsScala.CommandSide.Domain.DomainState._
 import SimpleCqrsScala.CommandSide.Domain.DomainState.EitherTransition._
 import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
-import SimpleCqrsScala.CommandSide.Validation.{OrderValidation, InventoryItemValidation}
+import SimpleCqrsScala.CommandSide.Validation.OrderValidation
 import scalaz.Scalaz._
 
 import java.util.UUID
 
-trait OrderService extends OrderValidation with InventoryItemValidation {
+trait OrderService extends OrderValidation {
 
 	def createOrderFor(id: UUID, customerId: UUID, customerName: String): EitherTransition[Order] =
 		liftEvents{
