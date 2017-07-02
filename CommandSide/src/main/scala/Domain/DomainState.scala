@@ -19,11 +19,11 @@ object DomainState {
 	
 	object EitherTransition {
 
-		def zeroTransition[S: Aggregate] = State.state[S, List[Event]](Nil)
+		def zeroTransition[S: Aggregate] = 
+			State.state[S, List[Event]](Nil)
 
 		def apply[S: Aggregate](st: S => Validated[(S, List[Event])]): EitherTransition[S] = 
 			StateT[Validated, S, List[Event]](st)
-
 
 		def liftEvents[S: Aggregate](a: List[Event]): EitherTransition[S] = 
 			stateFor(a).lift[Validated]
@@ -37,13 +37,11 @@ object DomainState {
 		def liftValidatedF[S: Aggregate](fVe: S => Validated[List[Event]]): EitherTransition[S] = 
 			apply(s => fVe(s) map (stateFor(_).run(s)))
 		
-
 		def execTransition[S: Aggregate](eT: EitherTransition[S])(aState: S): Validated[S] =
 			eT.exec(aState)
 
 		def evalTransition[S: Aggregate](eT: EitherTransition[S])(aState: S): Validated[List[Event]] = 
 			eT.eval(aState)
-
 
 		private def stateFor[S: Aggregate](e: List[Event]): State[S, List[Event]] = for {
 			events	<- State.state(e)

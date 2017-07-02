@@ -19,7 +19,7 @@ trait OrderService extends OrderValidation {
 			OrderCreated(id, s"Order for $customerName (id: $customerId)", 1) :: Nil
 		}
 
-	def addInventoryItemToOrder(itemId: UUID, quantity: Int): EitherTransition[Order] =
+	def addInventoryItemToOrder(itemId: UUID, quantity: Int): EitherTransition[Order] = 
 		liftValidatedF {
 			ord => canBeChanged(ord) map { 
 				_ => InventoryItemAddedToOrder(ord.id, itemId, quantity, ord.expectedNextVersion) :: Nil

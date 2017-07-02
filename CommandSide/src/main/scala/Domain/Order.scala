@@ -20,8 +20,10 @@ object OrderItems {
 }
 
 sealed trait OrderStatus extends Product with Serializable
-final case object Open extends OrderStatus
-final case object Submitted extends OrderStatus
+sealed trait Open extends OrderStatus
+sealed trait Submitted extends OrderStatus
+final case object Open extends Open
+final case object Submitted extends Submitted
 
 @Lenses final case class Order private (
 	id: UUID,

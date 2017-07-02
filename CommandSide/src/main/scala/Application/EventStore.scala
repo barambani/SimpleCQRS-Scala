@@ -1,4 +1,4 @@
-package SimpleCqrsScala.CommandSide
+package SimpleCqrsScala.CommandSide.Application
 
 import SimpleCqrsScala.CommandSide.Domain._
 import java.util.UUID

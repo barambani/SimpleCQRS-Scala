@@ -1,4 +1,4 @@
-package SimpleCqrsScala.CommandSide
+package SimpleCqrsScala.CommandSide.Application
 
 import java.util.UUID
 import SimpleCqrsScala.CommandSide.Domain.InventoryItem._
@@ -9,7 +9,7 @@ import SimpleCqrsScala.CommandSide.Domain.Commands._
 import SimpleCqrsScala.CommandSide.Domain.Events.Event._
 import SimpleCqrsScala.CommandSide.Domain.DomainState._
 import SimpleCqrsScala.CommandSide.Domain.DomainState.EitherTransition._
-import SimpleCqrsScala.CommandSide.Repository._
+import SimpleCqrsScala.CommandSide.Application.Repository._
 import SimpleCqrsScala.CommandSide.Domain.Aggregate
 import SimpleCqrsScala.CommandSide.Services.OrderService
 import SimpleCqrsScala.CommandSide.Services.InventoryItemService
@@ -47,8 +47,8 @@ object CommandHandler {
 
 object DomainCommandHandlers extends OrderService with InventoryItemService {
 
-	import SimpleCqrsScala.CommandSide.CommandHandler._
-	import SimpleCqrsScala.CommandSide.CommandHandler.Handler._
+	import SimpleCqrsScala.CommandSide.Application.CommandHandler._
+	import SimpleCqrsScala.CommandSide.Application.CommandHandler.Handler._
 	import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
 
 	implicit object CreateInventoryItemH extends Handler[CreateInventoryItem] {

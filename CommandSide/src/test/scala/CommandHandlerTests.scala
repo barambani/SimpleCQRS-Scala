@@ -5,9 +5,9 @@ import org.specs2.mutable._
 import scala.collection.mutable._
 import SimpleCqrsScala.CommandSide.Domain.Commands._
 import SimpleCqrsScala.CommandSide.Domain.Events._
-import SimpleCqrsScala.CommandSide.Repository._
-import SimpleCqrsScala.CommandSide.CommandHandler._
-import SimpleCqrsScala.CommandSide.DomainCommandHandlers._
+import SimpleCqrsScala.CommandSide.Application.Repository._
+import SimpleCqrsScala.CommandSide.Application.CommandHandler._
+import SimpleCqrsScala.CommandSide.Application.DomainCommandHandlers._
 import SimpleCqrsScala.CommandSide.Printer._
 import scalaz.ReaderT
 import scalaz.concurrent.Task
