@@ -2,10 +2,11 @@ package SimpleCqrsScala.CommandSide.Test
 
 import org.specs2.mutable._
 import SimpleCqrsScala.CommandSide.Domain.Events._
+import SimpleCqrsScala.CommandSide.{OrderEventsShow, InventoryItemEventsShow, ErrorsShow}
 import SimpleCqrsScala.CommandSide.Printer._
 import java.util.UUID
 
-object ShowTests extends Specification {
+object ShowTests extends Specification with ErrorsShow with OrderEventsShow with InventoryItemEventsShow {
 
 	val id = UUID.randomUUID
   val id2 = UUID.randomUUID

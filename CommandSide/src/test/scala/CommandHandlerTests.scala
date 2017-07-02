@@ -5,15 +5,18 @@ import org.specs2.mutable._
 import scala.collection.mutable._
 import SimpleCqrsScala.CommandSide.Domain.Commands._
 import SimpleCqrsScala.CommandSide.Domain.Events._
-import SimpleCqrsScala.CommandSide.Application.Repository._
+import SimpleCqrsScala.CommandSide.Application.AnEventStore._
 import SimpleCqrsScala.CommandSide.Application.CommandHandler._
 import SimpleCqrsScala.CommandSide.Application.DomainCommandHandlers._
+import SimpleCqrsScala.CommandSide.ErrorsShow
 import SimpleCqrsScala.CommandSide.Printer._
+
+import cats.effect._
+
 import scalaz.ReaderT
-import scalaz.concurrent.Task
 import scalaz.{\/-, -\/}
 
-sealed trait CommandHandlerStubs {
+sealed trait CommandHandlerStubs extends ErrorsShow {
 
 	lazy val id = UUID.randomUUID
 	lazy val inventoryItemHistory = List(
@@ -25,16 +28,16 @@ sealed trait CommandHandlerStubs {
 		InventoryItemCreated(id, "First Inventory Item Name", 1)
 	)
 	
-	lazy val inventoryItemQuery: Query = 
-		ReaderT { _ => Task.now(inventoryItemHistory) }
+	lazy val inventoryItemQuery: StoreRetrieve = 
+		ReaderT { _ => IO { inventoryItemHistory } }
 
-	lazy val orderQuery: Query = 
+	lazy val orderQuery: StoreRetrieve = 
 		ReaderT { 
-			_ => Task.now { List(OrderCreated(id, "Test Order", 1)) }
+			_ => IO { List(OrderCreated(id, "Test Order", 1)) }
 		}
 
-	def handleInTest[C](command: C, q: Query)(implicit CH: Handler[C]): Result = 
-		CH.handle(command).run(q).unsafePerformSync
+	def handleInTest[C](command: C, q: StoreRetrieve)(implicit CH: Handler[C]): Result = 
+		CH.handle(command).run(q).unsafeRunSync
 }
 
 object CommandHandlerTests extends Specification with CommandHandlerStubs {

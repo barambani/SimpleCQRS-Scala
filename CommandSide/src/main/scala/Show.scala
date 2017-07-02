@@ -9,12 +9,12 @@ import scalaz.syntax.foldable._
 trait Show[A] {
 	def stringFor(a: A): String
 }
-
 object Show {
-
 	def apply[A](implicit instance: Show[A]): Show[A] = instance
+}
 
-	// Order Events
+trait OrderEventsShow {
+
 	implicit object OrderCreatedShow extends Show[OrderCreated] {
 		def stringFor(x: OrderCreated): String = 
 			s"seq: ${x.sequence} - Order ${x.description} created (id: ${x.id})"
@@ -37,8 +37,10 @@ object Show {
 	implicit object OrderSubmittedShow extends Show[OrderSubmitted] {
 		def stringFor(x: OrderSubmitted): String = s"seq: ${x.sequence} - order submitted (id: ${x.id})"
 	}
+}
 
-	// Inventory Item Events
+trait InventoryItemEventsShow {
+
 	implicit object InventoryItemCreatedShow extends Show[InventoryItemCreated] {
 		def stringFor(x: InventoryItemCreated): String = s"seq: ${x.sequence} - Item ${x.name} created (id: ${x.id})"
 	}
@@ -54,8 +56,10 @@ object Show {
 	implicit object ItemsRemovedFromInventoryShow extends Show[ItemsRemovedFromInventory] {
 		def stringFor(x: ItemsRemovedFromInventory): String = s"seq: ${x.sequence} - Removed ${x.count} item/s (id: ${x.id})"
 	}
+}
 
-	//	Errors
+trait ErrorsShow {
+
 	implicit object ErrorFromThrowableShow extends Show[ErrorFromThrowable] {
 		def stringFor(x: ErrorFromThrowable): String = s"Error from throwable with message ${x.message}"
 	}

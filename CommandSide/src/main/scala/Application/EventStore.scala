@@ -1,22 +1,18 @@
 package SimpleCqrsScala.CommandSide.Application
 
-import SimpleCqrsScala.CommandSide.Domain._
 import java.util.UUID
 import scalaz.ReaderT
-import scalaz.concurrent.Task
+import cats.effect._
 import SimpleCqrsScala.CommandSide.Domain.Events._
 
-object Repository {
+trait EventStore {
+	type StoreRetrieve = ReaderT[IO, UUID, List[Event]]
+	type StoreInsert   = ReaderT[IO, List[Event], Unit]
 
-	type Query = ReaderT[Task, UUID, List[Event]]
-	type Write = ReaderT[Task, List[Event], Unit]
-
-	sealed trait EventStore {
-		val sink: Write
-		val history: Query
-	}
-	implicit object EventStore {
-		val sink: Write = ???
-		val history: Query = ???
-	}
+	def read: StoreRetrieve
+	def write: StoreInsert
+}
+object AnEventStore extends EventStore {
+	def read: StoreRetrieve = ???
+	def write: StoreInsert  = ???
 }

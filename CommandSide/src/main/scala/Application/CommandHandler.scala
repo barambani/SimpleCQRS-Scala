@@ -9,19 +9,25 @@ import SimpleCqrsScala.CommandSide.Domain.Commands._
 import SimpleCqrsScala.CommandSide.Domain.Events.Event._
 import SimpleCqrsScala.CommandSide.Domain.DomainState._
 import SimpleCqrsScala.CommandSide.Domain.DomainState.EitherTransition._
-import SimpleCqrsScala.CommandSide.Application.Repository._
 import SimpleCqrsScala.CommandSide.Domain.Aggregate
 import SimpleCqrsScala.CommandSide.Services.OrderService
 import SimpleCqrsScala.CommandSide.Services.InventoryItemService
+import SimpleCqrsScala.CommandSide.Application.AnEventStore._
 import scalaz.Reader
+import scalaz.Bind
 import scalaz.\/
 import scalaz.NonEmptyList
-import scalaz.concurrent.Task
+import cats.effect._
 
 object CommandHandler {
 
+	implicit object IoBind extends Bind[IO] {
+		def bind[A, B](fa: IO[A])(f: A => IO[B]): IO[B] = fa flatMap f
+		def map[A, B](fa: IO[A])(f: A => B): IO[B] = fa map f
+	}
+
 	type Result 		= \/[NonEmptyList[ErrorMessage], List[Event]]
-	type CommandEffect	= Reader[Query, Task[Result]]
+	type CommandEffect	= Reader[StoreRetrieve, IO[Result]]
 
 	trait Handler[C] {
 		def handle(c: C): CommandEffect
@@ -31,10 +37,10 @@ object CommandHandler {
 
 		def apply[C](implicit instance: Handler[C]): Handler[C] = instance
 
-		def transitionAfterState[S: Aggregate](t: EitherTransition[S])(s: S): Task[Result] = 
-			Task.now(evalTransition(t)(s))
+		def transitionAfterState[S: Aggregate](t: EitherTransition[S])(s: S): IO[Result] = 
+			IO { evalTransition(t)(s) }
 
-		def transitionAfterHistory[S: Aggregate](t: EitherTransition[S])(h: List[Event]): Task[Result] = 
+		def transitionAfterHistory[S: Aggregate](t: EitherTransition[S])(h: List[Event]): IO[Result] = 
 			transitionAfterState(t)(Aggregate[S].rehydrate(h))
 
 		def initialEffectOf[S: Aggregate](t: EitherTransition[S]): CommandEffect = 

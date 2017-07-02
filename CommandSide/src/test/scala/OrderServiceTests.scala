@@ -7,11 +7,12 @@ import SimpleCqrsScala.CommandSide.Domain.DomainState.EitherTransition._
 import SimpleCqrsScala.CommandSide.Services.OrderService
 import SimpleCqrsScala.CommandSide.Domain.Validator._
 import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
+import SimpleCqrsScala.CommandSide.{OrderEventsShow, ErrorsShow}
 import SimpleCqrsScala.CommandSide.Printer._
 
 import java.util.UUID
 
-object OrderServiceTests extends Specification with OrderService {
+object OrderServiceTests extends Specification with OrderService with ErrorsShow with OrderEventsShow {
 
 	lazy val orderId = UUID.randomUUID
 	lazy val customerId = UUID.randomUUID
