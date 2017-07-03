@@ -8,6 +8,12 @@ import java.util.UUID
 
 trait OrderValidation {
 
+	def canBeCreated(ord: Order): Validated[Order] =
+		ord.id == Order.empty.id match {
+			case true 	=> succeeded(ord)
+			case false 	=> failedWith(UniqueIdAlreadyInUse(ord.id))
+		}
+
 	def canBeChanged(ord: Order): Validated[Order] = 
 		ord.status match {
 			case Open	=> succeeded(ord)

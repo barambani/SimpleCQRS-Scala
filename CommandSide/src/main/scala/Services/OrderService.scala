@@ -15,10 +15,12 @@ import java.util.UUID
 trait OrderService extends OrderValidation {
 
 	def createOrderFor(id: UUID, customerId: UUID, customerName: String): EitherTransition[Order] =
-		liftEvents{
-			OrderCreated(id, s"Order for $customerName (id: $customerId)", 1) :: Nil
+		liftValidatedF {
+			ord => canBeCreated(ord) map { 
+				_ => OrderCreated(id, s"Order for $customerName (id: $customerId)", 1) :: Nil
+			}
 		}
-
+		
 	def addInventoryItemToOrder(itemId: UUID, quantity: Int): EitherTransition[Order] = 
 		liftValidatedF {
 			ord => canBeChanged(ord) map { 

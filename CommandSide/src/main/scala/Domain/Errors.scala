@@ -9,6 +9,8 @@ object Errors {
 
 	final case class ErrorFromThrowable(message: String) extends ErrorMessage
 
+	final case class UniqueIdAlreadyInUse(temId: UUID) extends ErrorMessage	
+
 	final case class InventoryItemNameNotValid(itemId: UUID, name: Option[String], requestedName: String) extends ErrorMessage
 	final case class NotEnoughItemsInStock(itemId: UUID, name: String, requestedCount: Int) extends ErrorMessage
 

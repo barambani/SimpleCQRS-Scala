@@ -8,6 +8,12 @@ import java.util.UUID
 
 trait InventoryItemValidation {
 
+	def canBeCreated(item: InventoryItem): Validated[InventoryItem] =
+		item.id == InventoryItem.empty.id match {
+			case true 	=> succeeded(item)
+			case false 	=> failedWith(UniqueIdAlreadyInUse(item.id))
+		}
+
 	def theNameIsValid(id: UUID, actualName: Option[String])(name: String): Validated[String] = 
 		name.isEmpty match {
 			case true 	=> failedWith(InventoryItemNameNotValid(id, actualName, name))
