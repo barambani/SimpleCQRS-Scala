@@ -1,18 +1,28 @@
 package SimpleCqrsScala.CommandSide.Application
 
-import java.util.UUID
-import scalaz.ReaderT
+import scalaz.Kleisli
 import cats.effect._
-import SimpleCqrsScala.CommandSide.Domain.Events._
 
-trait EventStore {
-	type StoreRetrieve = ReaderT[IO, UUID, List[Event]]
-	type StoreInsert   = ReaderT[IO, List[Event], Unit]
+sealed trait EventStoreType
+sealed trait Cassandra extends EventStoreType
+sealed trait Redis extends EventStoreType
 
+trait EventStore[S] {
 	def read: StoreRetrieve
 	def write: StoreInsert
 }
-object AnEventStore extends EventStore {
-	def read: StoreRetrieve = ???
-	def write: StoreInsert  = ???
+object EventStore {
+	def apply[S <: EventStoreType](implicit INST: EventStore[S]): EventStore[S] = INST
+}
+
+trait EventStoreTypes {
+
+	implicit val cassandraEventStore = new EventStore[Cassandra] {
+		
+		def read: StoreRetrieve =
+			Kleisli{ id => IO { Nil } }
+	
+		def write: StoreInsert =
+			Kleisli{ events => IO { () } }
+	}
 }
