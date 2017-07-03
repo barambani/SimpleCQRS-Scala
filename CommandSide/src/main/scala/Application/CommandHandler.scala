@@ -25,7 +25,7 @@ object CommandHandler {
 		type A <: Identity
 		def executionOf(c: C): EitherTransition[A]
 
-		def handle[CT <: CacheType, ST <: EventStoreType](c: C, id: UUID)(implicit CA: CurrentAggregate[CT, ST, A]): IO[Validated[(A, List[Event])]] =
+		def handle[CT <: CacheType, ST <: EventStoreType](c: C, id: UUID)(implicit CA: CurrentAggregateState[CT, ST, A]): IO[Validated[(A, List[Event])]] =
 			CA.fromCacheOrRehydrate.run(id) map { agg => executionOf(c) run agg } 
 	}
 

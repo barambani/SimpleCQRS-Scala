@@ -7,7 +7,7 @@ import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
 import scalaz.Kleisli
 import cats.effect._
 
-trait CurrentAggregate[CT, ST, A] {
+trait CurrentAggregateState[CT, ST, A] {
 
 	implicit val CA: Cache[CT, A]
 	implicit val ES: EventStore[ST]
@@ -23,19 +23,19 @@ trait CurrentAggregate[CT, ST, A] {
 	private def rehydrateFromStore: Kleisli[IO, UUID, A] =
 		ES.read map { events => AGG.rehydrate(events) }
 }
-object CurrentAggregate {
-	def apply[CT <: CacheType, ST <: EventStoreType, A](implicit INST: CurrentAggregate[CT, ST, A]): CurrentAggregate[CT, ST, A] = INST
+object CurrentAggregateState {
+	def apply[CT <: CacheType, ST <: EventStoreType, A](implicit INST: CurrentAggregateState[CT, ST, A]): CurrentAggregateState[CT, ST, A] = INST
 }
 
-trait CurrentAggregates extends EventStoreTypes with ActorCache {
+trait CurrentAggregateStateImpl extends EventStoreTypes with ActorCache {
 
-	implicit val currentOrderAggregate1 = new CurrentAggregate[LocalActor, Cassandra, Order] {
+	implicit val currentOrderAggregate1 = new CurrentAggregateState[LocalActor, Cassandra, Order] {
 		val CA = Cache[LocalActor, Order]
 		val ES = EventStore[Cassandra]
 		val AGG = Aggregate[Order]
 	}
 
-	implicit val currentInventoryItemAggregate1 = new CurrentAggregate[LocalActor, Cassandra, InventoryItem] {
+	implicit val currentInventoryItemAggregate1 = new CurrentAggregateState[LocalActor, Cassandra, InventoryItem] {
 		val CA = Cache[LocalActor, InventoryItem]
 		val ES = EventStore[Cassandra]
 		val AGG = Aggregate[InventoryItem]
