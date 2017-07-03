@@ -18,26 +18,21 @@ import scalaz.Kleisli
 import scalaz.\/
 import cats.effect._
 
-object CommandHandler {
+trait Handler[C] {
 
-	trait Handler[C] {
+	type A <: Identity
+	def executionOf(c: C): EitherTransition[A]
 
-		type A <: Identity
-		def executionOf(c: C): EitherTransition[A]
-
-		def handle[CT <: CacheType, ST <: EventStoreType](c: C, id: UUID)(implicit CA: CurrentAggregateState[CT, ST, A]): IO[Validated[(A, List[Event])]] =
-			CA.fromCacheOrRehydrate.run(id) map { agg => executionOf(c) run agg } 
-	}
-
-	object Handler {
-		def apply[C](implicit instance: Handler[C]): Handler[C] = instance
-	}
+	def handle[CT <: CacheType, ST <: EventStoreType](c: C, id: UUID)(implicit CA: CurrentAggregateState[CT, ST, A]): IO[Validated[(A, List[Event])]] =
+		CA.fromCacheOrRehydrate.run(id) map { agg => executionOf(c) run agg } 
+}
+object Handler {
+	def apply[C](implicit instance: Handler[C]): Handler[C] = instance
 }
 
-object DomainCommandHandlers extends OrderService with InventoryItemService {
+object InventoryItemCommandHandlers extends InventoryItemService {
 
-	import SimpleCqrsScala.CommandSide.Application.CommandHandler._
-	import SimpleCqrsScala.CommandSide.Application.CommandHandler.Handler._
+	import SimpleCqrsScala.CommandSide.Application.Handler._
 	import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
 
 	implicit object CreateInventoryItemH extends Handler[CreateInventoryItem] {
@@ -68,8 +63,12 @@ object DomainCommandHandlers extends OrderService with InventoryItemService {
 		def executionOf(c: RemoveItemsFromInventory): EitherTransition[InventoryItem] =
 			removeItemsFromInventory(c.count)
 	}
+}
 
+object OrderItemCommandHandlers extends OrderService {
 
+	import SimpleCqrsScala.CommandSide.Application.Handler._
+	import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
 
 	implicit object CreateOrderH extends Handler[CreateOrder] {
 		type A = Order
