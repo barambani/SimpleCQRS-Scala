@@ -18,11 +18,11 @@ object EventStore {
 trait EventStoreTypes {
 
 	implicit val cassandraEventStore = new EventStore[Cassandra] {
+			
+			def read: StoreRetrieve =
+				Kleisli { id => IO { Nil } }
 		
-		def read: StoreRetrieve =
-			Kleisli{ id => IO { Nil } }
-	
-		def write: StoreInsert =
-			Kleisli{ events => IO { () } }
-	}
+			def write: StoreInsert =
+				Kleisli { events => IO { () } }
+		}
 }

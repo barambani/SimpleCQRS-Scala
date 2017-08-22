@@ -14,45 +14,53 @@ import Validator._
 import AggregateRoot._
 
 object DomainState {
-	
-	type EitherTransition[S] = StateT[Validated, S, List[Event]]
-	
-	object EitherTransition {
 
-		def zeroTransition[S](implicit A: Aggregate[S]): State[S, List[Event]] = 
-			State.state[S, List[Event]](Nil)
+  type EitherTransition[S] = StateT[Validated, S, List[Event]]
 
-		def apply[S](st: S => Validated[(S, List[Event])])(implicit A: Aggregate[S]): EitherTransition[S] = 
-			StateT[Validated, S, List[Event]](st)
+  object EitherTransition {
 
-		def liftEvents[S](a: List[Event])(implicit A: Aggregate[S]): EitherTransition[S] = 
-			stateFor(a).lift[Validated]
+    def zeroTransition[S](implicit A: Aggregate[S]): State[S, List[Event]] = 
+      State.state[S, List[Event]](Nil)
 
-		def liftEventsF[S](fA: S => List[Event])(implicit A: Aggregate[S]): EitherTransition[S] = 
-			stateForF(fA).lift[Validated]
+    def apply[S](st: S => Validated[(S, List[Event])])(implicit A: Aggregate[S]): EitherTransition[S] = 
+      StateT[Validated, S, List[Event]](st)
 
-		def liftValidated[S](ve: Validated[List[Event]])(implicit A: Aggregate[S]): EitherTransition[S] =
-			liftValidatedF(_ => ve)
+    def liftEvents[S](a: List[Event])(implicit A: Aggregate[S]): EitherTransition[S] = 
+      stateFor(a).lift[Validated]
 
-		def liftValidatedF[S](fVe: S => Validated[List[Event]])(implicit A: Aggregate[S]): EitherTransition[S] = 
-			apply(s => fVe(s) map (stateFor(_).run(s)))
-		
-		def execTransition[S](eT: EitherTransition[S])(aState: S)(implicit A: Aggregate[S]): Validated[S] =
-			eT.exec(aState)
+    def liftEventsF[S](fA: S => List[Event])(implicit A: Aggregate[S]): EitherTransition[S] = 
+      stateForF(fA).lift[Validated]
 
-		def evalTransition[S](eT: EitherTransition[S])(aState: S)(implicit A: Aggregate[S]): Validated[List[Event]] = 
-			eT.eval(aState)
+    def liftValidated[S](ve: Validated[List[Event]])(implicit A: Aggregate[S]): EitherTransition[S] =
+      liftValidatedF(_ => ve)
 
-		private def stateFor[S: Aggregate](e: List[Event]): State[S, List[Event]] = for {
-			events	<- State.state(e)
-			_		<- State.modify[S]{ evolve(_)(events) }
+    def liftValidatedF[S](fVe: S => Validated[List[Event]])(implicit A: Aggregate[S]): EitherTransition[S] = 
+      apply(s => fVe(s) map (stateFor(_).run(s)))
 
-		} yield events
+    def execTransition[S](eT: EitherTransition[S])(aState: S)(implicit A: Aggregate[S]): Validated[S] =
+      eT.exec(aState)
 
-		private def stateForF[S: Aggregate](eF: S => List[Event]): State[S, List[Event]] = for {
-			events	<- State.gets(eF)
-			_		<- State.modify[S]{ evolve(_)(events) }
+    def evalTransition[S](eT: EitherTransition[S])(aState: S)(implicit A: Aggregate[S]): Validated[List[Event]] = 
+      eT.eval(aState)
 
-		} yield events
-	}
+    private def stateFor[S: Aggregate](e: List[Event]): State[S, List[Event]] = 
+      for {
+        events	<- State.state(e)
+        _		<- State.modify[S]{ evolve(_)(events) }
+      } yield events
+
+    private def stateForF[S: Aggregate](eF: S => List[Event]): State[S, List[Event]] =
+      for {
+        events	<- State.gets(eF)
+        _		<- State.modify[S]{ evolve(_)(events) }
+      } yield events
+  }
+
+  implicit class EitherTransitionSyntax[S](t: EitherTransition[S]) {
+
+    import EitherTransition._
+
+    def execFrom(aState: S)(implicit A: Aggregate[S]): Validated[S] = execTransition(t)(aState)
+    def evalFrom(aState: S)(implicit A: Aggregate[S]): Validated[List[Event]] = evalTransition(t)(aState)
+  }
 }

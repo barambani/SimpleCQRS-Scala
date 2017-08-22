@@ -1,8 +1,6 @@
-import sbt._
-
 inThisBuild(Seq(
   scalaOrganization := "org.typelevel",
-  scalaVersion := "2.12.2-bin-typelevel-4"
+  scalaVersion := "2.12.3-bin-typelevel-4"
 ))
 
 lazy val prjcSettings = Seq (
@@ -23,8 +21,8 @@ libraryDependencies ++= Seq(
 	"org.scalaz" %% "scalaz-core" % "7.3.0-M13",
 	"org.scalaz" %% "scalaz-concurrent" % "7.3.0-M13",
 	
-	"co.fs2" %% "fs2-core" % "0.9.6",
-	"co.fs2" %% "fs2-io" % "0.9.6",
+	"co.fs2" %% "fs2-core" % "0.10.0-M3",
+	"co.fs2" %% "fs2-io" % "0.10.0-M3",
 
 	"org.typelevel" %% "cats-effect" % "0.3",
 	

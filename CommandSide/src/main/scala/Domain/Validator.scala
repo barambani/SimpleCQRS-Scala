@@ -7,8 +7,8 @@ import SimpleCqrsScala.CommandSide.Domain.Errors._
 
 object Validator {
 
-	type Validated[A] = \/[NonEmptyList[ErrorMessage], A]
+  type Validated[A] = \/[NonEmptyList[ErrorMessage], A]
 
-	def failedWith[A](e: ErrorMessage): Validated[A] = -\/(NonEmptyList(e))
-	def succeeded[A](a: A): Validated[A] = \/-(a)
+  def failedWith[A](e: ErrorMessage): Validated[A] = -\/(NonEmptyList(e))
+  def succeeded[A](a: A): Validated[A] = \/-(a)
 }

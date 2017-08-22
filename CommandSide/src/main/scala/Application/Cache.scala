@@ -25,18 +25,18 @@ trait ActorCache {
 	implicit val orderActorCache = new Cache[LocalActor, Order] {
 		
 		def read: CacheGet[Order] = 
-			Kleisli{ id => IO { None } }
+			Kleisli { id => IO { None } }
 	
 		def write: CachePut[Order] =
-			Kleisli{ a => IO { () } }
+			Kleisli { a => IO { () } }
 	}
 
 	implicit val inventoryItemActorCache = new Cache[LocalActor, InventoryItem] {
 		
 		def read: CacheGet[InventoryItem] = 
-			Kleisli{ id => IO { None } }
+			Kleisli { id => IO { None } }
 	
 		def write: CachePut[InventoryItem] =
-			Kleisli{ a => IO { () } }
+			Kleisli { a => IO { () } }
 	}
 }
