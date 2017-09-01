@@ -19,16 +19,25 @@ import scalaz.\/
 import cats.effect._
 
 trait Handler[C] {
-
   type A <: Identity
   def executionOf(c: C): EitherTransition[A]
-
-  def handle[CT <: CacheType, ST <: EventStoreType](c: C, id: UUID)(implicit CA: CurrentAggregateState[CT, ST, A]): IO[Validated[(A, List[Event])]] =
-    CA.fromCacheOrRehydrate.run(id) map { agg => executionOf(c) run agg } 
 }
 
 object Handler {
-  def apply[C](implicit instance: Handler[C]): Handler[C] = instance
+
+  type AUX[C, OUT <: Identity] = Handler[C] { type A = OUT }
+
+  def apply[C](implicit INST: Handler[C]): AUX[C, INST.A] = INST
+
+  implicit class HandlerSyntax[C <: Command](c: C) {
+
+    def handle[A <: Identity, CT <: CacheType, ST <: EventStoreType](cache: CT, store: ST)(
+      implicit
+        H:   Handler.AUX[C, A],
+        AGG: Aggregate[A],
+        CA:  CurrentAggregateState[CT, ST, A]): IO[Validated[(A, List[Event])]] =
+      CA.fromCacheOrRehydrate.run(c.id) map { agg => H.executionOf(c) run agg } 
+    }
 }
 
 object InventoryItemCommandHandlers extends InventoryItemService {
@@ -36,11 +45,12 @@ object InventoryItemCommandHandlers extends InventoryItemService {
   import SimpleCqrsScala.CommandSide.Application.Handler._
   import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
 
-  implicit object CreateInventoryItemH extends Handler[CreateInventoryItem] {
-    type A = InventoryItem
-    def executionOf(c: CreateInventoryItem): EitherTransition[InventoryItem] =
-      createItemFor(c.id, c.name)
-  }
+  implicit lazy val createInventoryItemH: AUX[CreateInventoryItem, InventoryItem] =
+    new Handler[CreateInventoryItem] {
+      type A = InventoryItem
+      def executionOf(c: CreateInventoryItem): EitherTransition[InventoryItem] =
+        createItemFor(c.id, c.name)
+    }
 
   implicit object DeactivateInventoryItemH extends Handler[DeactivateInventoryItem] {
     type A = InventoryItem
@@ -66,7 +76,7 @@ object InventoryItemCommandHandlers extends InventoryItemService {
   }
 }
 
-object OrderItemCommandHandlers extends OrderService {
+object OrderCommandHandlers extends OrderService {
 
   import SimpleCqrsScala.CommandSide.Application.Handler._
   import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._

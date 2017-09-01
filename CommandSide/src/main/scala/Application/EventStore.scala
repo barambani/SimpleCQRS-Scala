@@ -4,8 +4,12 @@ import scalaz.Kleisli
 import cats.effect._
 
 sealed trait EventStoreType
+
 sealed trait Cassandra extends EventStoreType
+object Cassandra extends Cassandra
+
 sealed trait Redis extends EventStoreType
+object Redis extends Redis
 
 trait EventStore[S] {
   def read: StoreRetrieve

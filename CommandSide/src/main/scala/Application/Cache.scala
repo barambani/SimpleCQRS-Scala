@@ -9,8 +9,12 @@ import cats.effect._
 import SimpleCqrsScala.CommandSide.Domain.Events._
 
 sealed trait CacheType
+
 sealed trait LocalActor extends CacheType
+object LocalActor extends LocalActor
+
 sealed trait Memcached extends CacheType
+object Memcached extends Memcached
 
 trait Cache[C, A] {
   def read: CacheGet[A]
