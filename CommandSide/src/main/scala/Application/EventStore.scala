@@ -3,13 +3,17 @@ package SimpleCqrsScala.CommandSide.Application
 import scalaz.Kleisli
 import cats.effect._
 
-sealed trait EventStoreType
+object EventStoreType {
 
-sealed trait Cassandra extends EventStoreType
-object Cassandra extends Cassandra
+  type Cassandra = Cassandra.type
+  type Redis = Redis.type
+ 
+  sealed trait EventStoreType
+  final case object Cassandra extends EventStoreType
+  final case object Redis extends EventStoreType
+}
 
-sealed trait Redis extends EventStoreType
-object Redis extends Redis
+import SimpleCqrsScala.CommandSide.Application.EventStoreType._
 
 trait EventStore[S] {
   def read: StoreRetrieve

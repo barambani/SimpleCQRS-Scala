@@ -7,12 +7,12 @@ import SimpleCqrsScala.CommandSide.Domain.DomainState.EitherTransition._
 import SimpleCqrsScala.CommandSide.Services.OrderService
 import SimpleCqrsScala.CommandSide.Domain.Validator._
 import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
-import SimpleCqrsScala.CommandSide.{OrderEventsShow, ErrorsShow}
-import SimpleCqrsScala.CommandSide.Show.ShowSyntax
+import SimpleCqrsScala.CommandSide.{OrderEventsPrint, ErrorsPrint}
+import SimpleCqrsScala.CommandSide.Print.PrintSyntax
 
 import java.util.UUID
 
-object OrderServiceTests extends Specification with OrderService with ErrorsShow with OrderEventsShow {
+object OrderServiceTests extends Specification with OrderService with ErrorsPrint with OrderEventsPrint {
 
   lazy val orderId = UUID.randomUUID
   lazy val customerId = UUID.randomUUID
@@ -27,7 +27,7 @@ object OrderServiceTests extends Specification with OrderService with ErrorsShow
       lazy val newState = initialState flatMap execTransition(addShippingAddressToOrder(""))
 
       newState.fold (
-        es  => es.show mustEqual s"the shipping address '' proposed for the order 'Order for Test Customer (id: ${customerId})' (id: ${orderId}) is not valid",
+        es  => es.print mustEqual s"the shipping address '' proposed for the order 'Order for Test Customer (id: ${customerId})' (id: ${orderId}) is not valid",
         _   => ko("The order shouldn't accept empty shipping address") 
       )
     }

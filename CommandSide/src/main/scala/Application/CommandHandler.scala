@@ -13,6 +13,9 @@ import SimpleCqrsScala.CommandSide.Domain.{Aggregate, Order, InventoryItem, Iden
 import SimpleCqrsScala.CommandSide.Domain.Validator._
 import SimpleCqrsScala.CommandSide.Services.OrderService
 import SimpleCqrsScala.CommandSide.Services.InventoryItemService
+import SimpleCqrsScala.CommandSide.Application.CacheType._
+import SimpleCqrsScala.CommandSide.Application.EventStoreType._
+
 import scalaz.Reader
 import scalaz.Kleisli
 import scalaz.\/

@@ -3,6 +3,8 @@ package SimpleCqrsScala.CommandSide.Application
 import java.util.UUID
 import SimpleCqrsScala.CommandSide.Domain.{Aggregate, DomainAggregates, Identity, Order, InventoryItem}
 import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
+import SimpleCqrsScala.CommandSide.Application.CacheType._
+import SimpleCqrsScala.CommandSide.Application.EventStoreType._
 
 import scalaz.Kleisli
 import cats.effect._

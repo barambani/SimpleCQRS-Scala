@@ -8,18 +8,22 @@ import cats.effect._
 
 import SimpleCqrsScala.CommandSide.Domain.Events._
 
-sealed trait CacheType
+object CacheType {
+ 
+  type LocalActor = LocalActor.type
+  type Memcached = Memcached.type
 
-sealed trait LocalActor extends CacheType
-object LocalActor extends LocalActor
-
-sealed trait Memcached extends CacheType
-object Memcached extends Memcached
+  sealed trait CacheType
+  final case object LocalActor extends CacheType
+  final case object Memcached extends CacheType
+}
 
 trait Cache[C, A] {
   def read: CacheGet[A]
   def write: CachePut[A]
 }
+
+import SimpleCqrsScala.CommandSide.Application.CacheType._
 
 object Cache {
   def apply[C <: CacheType, A](implicit INST: Cache[C, A], AG: Aggregate[A]): Cache[C, A] = INST
