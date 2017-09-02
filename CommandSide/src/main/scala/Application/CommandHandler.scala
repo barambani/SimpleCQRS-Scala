@@ -28,9 +28,9 @@ trait Handler[C] {
 
 object Handler {
 
-  type AUX[C, OUT <: Identity] = Handler[C] { type A = OUT }
+  type AUX[C <: Command, OUT <: Identity] = Handler[C] { type A = OUT }
 
-  def apply[C](implicit INST: Handler[C]): AUX[C, INST.A] = INST
+  def apply[C <: Command](implicit INST: Handler[C]): AUX[C, INST.A] = INST
 
   implicit class HandlerSyntax[C <: Command](c: C) {
 

@@ -123,35 +123,46 @@ object InventoryItemTests extends Specification with InventoryItemService {
       }
     }
 
-    // 	"generate the correct events after commands application" in {
+    "generate the correct events after commands application" in {
 
-    // 		val history = List(
-    // 			ItemsCheckedInToInventory(id, 10, 3),
-    // 			ItemsCheckedInToInventory(id, 10, 2),
-    // 			InventoryItemCreated(id, "Test Inventory Item", 1)
-    // 		)
+      val history = List(
+        ItemsCheckedInToInventory(id, 10, 3),
+        ItemsCheckedInToInventory(id, 10, 2),
+        InventoryItemCreated(id, "Test Inventory Item", 1)
+      )
 
-    // 		lazy val item = InventoryItem.rehydrate(history)
-    // 		lazy val transitions = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7))
+      lazy val item = InventoryItem.rehydrate(history)
+      lazy val transitions = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7))
 
-    // evalTransitions(transitions)(item).head.sequence mustEqual 5
-    // 	}
+      removeItemsFromInventory(2)
+        .concatTo(removeItemsFromInventory(7))
+        .evalFrom(item)
+        .fold(
+          _ => ko("The sequence of transitions failed"),
+          _.head.sequence mustEqual 5
+        )
+    }
 
-    // 	"have the correct state after commands application" in {
+    "have the correct state after commands application" in {
 
-    // 		val history = List(
-    // 			ItemsCheckedInToInventory(id, 10, 3),
-    // 			ItemsCheckedInToInventory(id, 10, 2),
-    // 			InventoryItemCreated(id, "Test Inventory Item", 1)
-    // 		)
+      val history = List(
+        ItemsCheckedInToInventory(id, 10, 3),
+        ItemsCheckedInToInventory(id, 10, 2),
+        InventoryItemCreated(id, "Test Inventory Item", 1)
+      )
 
-    // 		lazy val item = InventoryItem.rehydrate(history)
-    // 		lazy val transitions = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7), checkInItemsToInventory(3))
+      lazy val item = InventoryItem.rehydrate(history)
+      lazy val newTransition: EitherTransition[InventoryItem] =
+        removeItemsFromInventory(2)
+          .concatTo(removeItemsFromInventory(7))
+          .concatTo(checkInItemsToInventory(3))
 
-    // lazy val newTransition: EitherTransition[InventoryItem] = mergeTransitions(transitions)
-
-    // 		execTransition(newTransition)(item).itemsCount mustEqual 14
-    // 		execTransition(newTransition)(item).version mustEqual 6
-    // 	}
+      newTransition.execFrom(item).fold(
+        _ => ko("The sequence of transitions failed"),
+        s => {
+          s.itemsCount mustEqual 14
+          s.version mustEqual 6
+        })
+    }
   }
 }

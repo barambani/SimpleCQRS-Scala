@@ -43,16 +43,23 @@ object DomainState {
     def evalTransition[S](eT: EitherTransition[S])(aState: S)(implicit A: Aggregate[S]): Validated[List[Event]] = 
       eT.eval(aState)
 
+    def concat[S](t1: EitherTransition[S], t2: EitherTransition[S])(implicit A: Aggregate[S]): EitherTransition[S] =
+      apply(s => t1.run(s) flatMap { 
+        case (s1, es1) => t2.run(s1) flatMap {
+          case (s2, es2) => \/-((s2, es2 ::: es1))
+        }
+      })
+
     private def stateFor[S: Aggregate](e: List[Event]): State[S, List[Event]] = 
       for {
-        events	<- State.state(e)
-        _		<- State.modify[S]{ evolve(_)(events) }
+        events  <- State.state(e)
+        _       <- State.modify[S]{ evolve(_)(events) }
       } yield events
 
     private def stateForF[S: Aggregate](eF: S => List[Event]): State[S, List[Event]] =
       for {
-        events	<- State.gets(eF)
-        _		<- State.modify[S]{ evolve(_)(events) }
+        events  <- State.gets(eF)
+        _	<- State.modify[S]{ evolve(_)(events) }
       } yield events
   }
 
@@ -62,5 +69,6 @@ object DomainState {
 
     def execFrom(aState: S)(implicit A: Aggregate[S]): Validated[S] = execTransition(t)(aState)
     def evalFrom(aState: S)(implicit A: Aggregate[S]): Validated[List[Event]] = evalTransition(t)(aState)
+    def concatTo(other: EitherTransition[S])(implicit A: Aggregate[S]): EitherTransition[S] = concat(t, other)
   }
 }
