@@ -134,8 +134,7 @@ object InventoryItemTests extends Specification with InventoryItemService {
       lazy val item = InventoryItem.rehydrate(history)
       lazy val transitions = Seq(removeItemsFromInventory(2), removeItemsFromInventory(7))
 
-      removeItemsFromInventory(2)
-        .concatTo(removeItemsFromInventory(7))
+      (removeItemsFromInventory(2) compose removeItemsFromInventory(7))
         .evalFrom(item)
         .fold(
           _ => ko("The sequence of transitions failed"),
@@ -153,9 +152,7 @@ object InventoryItemTests extends Specification with InventoryItemService {
 
       lazy val item = InventoryItem.rehydrate(history)
       lazy val newTransition: EitherTransition[InventoryItem] =
-        removeItemsFromInventory(2)
-          .concatTo(removeItemsFromInventory(7))
-          .concatTo(checkInItemsToInventory(3))
+        (removeItemsFromInventory(2) compose removeItemsFromInventory(7) compose checkInItemsToInventory(3))
 
       newTransition.execFrom(item).fold(
         _ => ko("The sequence of transitions failed"),

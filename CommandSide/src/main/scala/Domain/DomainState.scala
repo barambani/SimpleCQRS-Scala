@@ -43,8 +43,8 @@ object DomainState {
     def evalTransition[S](eT: EitherTransition[S])(aState: S)(implicit A: Aggregate[S]): Validated[List[Event]] = 
       eT.eval(aState)
 
-    def concat[S](t1: EitherTransition[S], t2: EitherTransition[S])(implicit A: Aggregate[S]): EitherTransition[S] =
-      apply(s => t1.run(s) flatMap { 
+    def compose[S](t2: EitherTransition[S], t1: EitherTransition[S])(implicit A: Aggregate[S]): EitherTransition[S] =
+      apply(s => t1.run(s) flatMap {
         case (s1, es1) => t2.run(s1) flatMap {
           case (s2, es2) => \/-((s2, es2 ::: es1))
         }
@@ -65,10 +65,13 @@ object DomainState {
 
   implicit class EitherTransitionSyntax[S](t: EitherTransition[S]) {
 
-    import EitherTransition._
-
-    def execFrom(aState: S)(implicit A: Aggregate[S]): Validated[S] = execTransition(t)(aState)
-    def evalFrom(aState: S)(implicit A: Aggregate[S]): Validated[List[Event]] = evalTransition(t)(aState)
-    def concatTo(other: EitherTransition[S])(implicit A: Aggregate[S]): EitherTransition[S] = concat(t, other)
+    def execFrom(aState: S)(implicit A: Aggregate[S]): Validated[S] = 
+      EitherTransition.execTransition(t)(aState)
+    
+    def evalFrom(aState: S)(implicit A: Aggregate[S]): Validated[List[Event]] =
+      EitherTransition.evalTransition(t)(aState)
+    
+    def compose(other: EitherTransition[S])(implicit A: Aggregate[S]): EitherTransition[S] =
+      EitherTransition.compose(t, other)
   }
 }
