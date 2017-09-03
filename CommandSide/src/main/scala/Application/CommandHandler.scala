@@ -25,17 +25,24 @@ object Handler {
 
   def apply[C <: Command](implicit INST: Handler[C]): AUX[C, INST.A] = INST
 
-  implicit class HandlerSyntax[C <: Command, A <: Identity](c: C)(
+  def handle[C <: Command, A <: Identity, CT <: CacheType, ST <: EventStoreType, F[_]](c: C)(
     implicit
-      H:   Handler.AUX[C, A],
-      AGG: Aggregate[A]) {
+      H  : Handler.AUX[C, A],
+      CA : Cache[CT, A],
+      ES : EventStore[ST],
+      AGG: Aggregate[A],
+      MO : Monad[F]): F[Validated[(A, List[Event])]] =
+    CurrentAggregateState[A].fromCacheOrRehydrate.run(c.id) map { agg => H.executionOf(c) run agg }
 
+  implicit class HandlerSyntax[C <: Command, A <: Identity](c: C) {
     def handle[CT <: CacheType, ST <: EventStoreType, F[_]](
       implicit
-        CA: Cache[CT, A],
-        ES: EventStore[ST],
-        MO: Monad[F]): F[Validated[(A, List[Event])]] =
-      CurrentAggregateState[A].fromCacheOrRehydrate.run(c.id) map { agg => H.executionOf(c) run agg } 
+        H  : Handler.AUX[C, A],
+        CA : Cache[CT, A],
+        ES : EventStore[ST],
+        AGG: Aggregate[A],
+        MO : Monad[F]): F[Validated[(A, List[Event])]] =
+      Handler.handle(c)
   }
 }
 
