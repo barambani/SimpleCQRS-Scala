@@ -32,9 +32,10 @@ object Handler {
 
     def handle[CT <: CacheType, ST <: EventStoreType, F[_]](
       implicit
-        CA:  CurrentAggregateState[CT, ST, A],
-        MO:  Monad[F]): F[Validated[(A, List[Event])]] =
-      CA.fromCacheOrRehydrate.run(c.id) map { agg => H.executionOf(c) run agg } 
+        CA: Cache[CT, A],
+        ES: EventStore[ST],
+        MO: Monad[F]): F[Validated[(A, List[Event])]] =
+      CurrentAggregateState[A].fromCacheOrRehydrate.run(c.id) map { agg => H.executionOf(c) run agg } 
   }
 }
 
