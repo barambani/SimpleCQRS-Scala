@@ -2,10 +2,8 @@ package SimpleCqrsScala.CommandSide.Domain
 
 import java.util.UUID
 import monocle.macros.Lenses
-import monocle.{Lens, Optional}
-import monocle.macros.GenLens
+import monocle.Lens
 import monocle.function.all.at
-import monocle.std.map._
 import scalaz.Scalaz._
 import Events._
 import Events.Event._

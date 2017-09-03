@@ -2,11 +2,9 @@ package SimpleCqrsScala.CommandSide.Application
 
 import SimpleCqrsScala.CommandSide.Domain._
 
-import java.util.UUID
 import scalaz.Kleisli
-import cats.effect._
-
-import SimpleCqrsScala.CommandSide.Domain.Events._
+import scalaz.Monad
+import scala.language.higherKinds
 
 object CacheType {
  
@@ -19,8 +17,8 @@ object CacheType {
 }
 
 trait Cache[C, A] {
-  def read: CacheGet[A]
-  def write: CachePut[A]
+  def read[F[_]](implicit MO: Monad[F]): CacheGet[F, A]
+  def write[F[_]](implicit MO: Monad[F]): CachePut[F, A]
 }
 
 import SimpleCqrsScala.CommandSide.Application.CacheType._
@@ -29,23 +27,48 @@ object Cache {
   def apply[C <: CacheType, A](implicit INST: Cache[C, A], AG: Aggregate[A]): Cache[C, A] = INST
 }
 
-trait ActorCache {
+//  ----------------------------
+//  Actual cache implementations
+//  ----------------------------
+
+trait LocalActorCache {
 
   implicit val orderActorCache = new Cache[LocalActor, Order] {
 
-    def read: CacheGet[Order] = 
-      Kleisli { id => IO { None } }
+    def read[F[_]](implicit MO: Monad[F]): CacheGet[F, Order] = 
+      Kleisli { id => MO.point { None } }
 
-    def write: CachePut[Order] =
-      Kleisli { a => IO { () } }
+    def write[F[_]](implicit MO: Monad[F]): CachePut[F, Order] =
+      Kleisli { a => MO.point { () } }
   }
 
   implicit val inventoryItemActorCache = new Cache[LocalActor, InventoryItem] {
 
-    def read: CacheGet[InventoryItem] = 
-      Kleisli { id => IO { None } }
+    def read[F[_]](implicit MO: Monad[F]): CacheGet[F, InventoryItem] = 
+      Kleisli { id => MO.point { None } }
 
-    def write: CachePut[InventoryItem] =
-      Kleisli { a => IO { () } }
+    def write[F[_]](implicit MO: Monad[F]): CachePut[F, InventoryItem] =
+      Kleisli { a => MO.point { () } }
+  }
+}
+
+trait MemcachedCache{
+
+  implicit val orderActorCache = new Cache[Memcached, Order] {
+
+    def read[F[_]](implicit MO: Monad[F]): CacheGet[F, Order] = 
+      Kleisli { id => MO.point { None } }
+
+    def write[F[_]](implicit MO: Monad[F]): CachePut[F, Order] =
+      Kleisli { a => MO.point { () } }
+  }
+
+  implicit val inventoryItemActorCache = new Cache[Memcached, InventoryItem] {
+
+    def read[F[_]](implicit MO: Monad[F]): CacheGet[F, InventoryItem] = 
+      Kleisli { id => MO.point { None } }
+
+    def write[F[_]](implicit MO: Monad[F]): CachePut[F, InventoryItem] =
+      Kleisli { a => MO.point { () } }
   }
 }

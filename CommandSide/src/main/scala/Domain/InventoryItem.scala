@@ -7,8 +7,6 @@ import Events.Event._
 import DomainAggregates._
 import AggregateRoot._
 
-import SimpleCqrsScala.CommandSide.Domain.Errors._
-
 @Lenses final case class InventoryItem private (
   id: UUID, 
   name: String, 

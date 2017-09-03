@@ -1,14 +1,8 @@
 package SimpleCqrsScala.CommandSide.Application
 
-import java.util.UUID
-import SimpleCqrsScala.CommandSide.Domain.InventoryItem._
-import SimpleCqrsScala.CommandSide.Domain.Order._
-import SimpleCqrsScala.CommandSide.Domain.Errors._
 import SimpleCqrsScala.CommandSide.Domain.Events._
 import SimpleCqrsScala.CommandSide.Domain.Commands._
-import SimpleCqrsScala.CommandSide.Domain.Events.Event._
 import SimpleCqrsScala.CommandSide.Domain.DomainState._
-import SimpleCqrsScala.CommandSide.Domain.DomainState.EitherTransition._
 import SimpleCqrsScala.CommandSide.Domain.{Aggregate, Order, InventoryItem, Identity}
 import SimpleCqrsScala.CommandSide.Domain.Validator._
 import SimpleCqrsScala.CommandSide.Services.OrderService
@@ -16,10 +10,9 @@ import SimpleCqrsScala.CommandSide.Services.InventoryItemService
 import SimpleCqrsScala.CommandSide.Application.CacheType._
 import SimpleCqrsScala.CommandSide.Application.EventStoreType._
 
-import scalaz.Reader
-import scalaz.Kleisli
-import scalaz.\/
-import cats.effect._
+import scala.language.higherKinds
+import scalaz.Monad
+import scalaz.syntax.monad._
 
 trait Handler[C] {
   type A <: Identity
@@ -32,21 +25,22 @@ object Handler {
 
   def apply[C <: Command](implicit INST: Handler[C]): AUX[C, INST.A] = INST
 
-  implicit class HandlerSyntax[C <: Command](c: C) {
+  implicit class HandlerSyntax[C <: Command, A <: Identity](c: C)(
+    implicit
+      H:   Handler.AUX[C, A],
+      AGG: Aggregate[A]) {
 
-    def handle[A <: Identity, CT <: CacheType, ST <: EventStoreType](cache: CT, store: ST)(
+    def handle[CT <: CacheType, ST <: EventStoreType, F[_]](
       implicit
-        H:   Handler.AUX[C, A],
-        AGG: Aggregate[A],
-        CA:  CurrentAggregateState[CT, ST, A]): IO[Validated[(A, List[Event])]] =
+        CA:  CurrentAggregateState[CT, ST, A],
+        MO:  Monad[F]): F[Validated[(A, List[Event])]] =
       CA.fromCacheOrRehydrate.run(c.id) map { agg => H.executionOf(c) run agg } 
-    }
+  }
 }
 
 object InventoryItemCommandHandlers extends InventoryItemService {
 
   import SimpleCqrsScala.CommandSide.Application.Handler._
-  import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
 
   implicit lazy val createInventoryItemH: AUX[CreateInventoryItem, InventoryItem] =
     new Handler[CreateInventoryItem] {
@@ -80,9 +74,6 @@ object InventoryItemCommandHandlers extends InventoryItemService {
 }
 
 object OrderCommandHandlers extends OrderService {
-
-  import SimpleCqrsScala.CommandSide.Application.Handler._
-  import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
 
   implicit object CreateOrderH extends Handler[CreateOrder] {
     type A = Order

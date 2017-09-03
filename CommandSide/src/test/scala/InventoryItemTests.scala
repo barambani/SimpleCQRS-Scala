@@ -6,12 +6,11 @@ import SimpleCqrsScala.CommandSide.Domain.Events._
 import SimpleCqrsScala.CommandSide.Domain.Validator._
 import SimpleCqrsScala.CommandSide.Domain.DomainState.EitherTransition._
 import SimpleCqrsScala.CommandSide.Domain.InventoryItem
-import SimpleCqrsScala.CommandSide.Domain.AggregateRoot._
 import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
 import SimpleCqrsScala.CommandSide.Domain.DomainState._
 import SimpleCqrsScala.CommandSide.Services.InventoryItemService
 
-import scalaz.{\/, -\/, \/-}
+import scalaz.\/-
 
 import java.util.UUID
 

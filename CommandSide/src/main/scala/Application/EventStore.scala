@@ -1,7 +1,8 @@
 package SimpleCqrsScala.CommandSide.Application
 
+import scalaz.Monad
 import scalaz.Kleisli
-import cats.effect._
+import scala.language.higherKinds
 
 object EventStoreType {
 
@@ -16,21 +17,37 @@ object EventStoreType {
 import SimpleCqrsScala.CommandSide.Application.EventStoreType._
 
 trait EventStore[S] {
-  def read: StoreRetrieve
-  def write: StoreInsert
+  def read[F[_]](implicit MO: Monad[F]): StoreRetrieve[F]
+  def write[F[_]](implicit MO: Monad[F]): StoreInsert[F]
 }
 
 object EventStore {
   def apply[S <: EventStoreType](implicit INST: EventStore[S]): EventStore[S] = INST
 }
 
-trait EventStoreTypes {
+//  ----------------------------------
+//  Actual event store implementations
+//  ----------------------------------
+trait CassandraStoreTypes {
 
   implicit val cassandraEventStore = new EventStore[Cassandra] {
-    def read: StoreRetrieve =
-      Kleisli { id => IO { Nil } }
+    
+    def read[F[_]](implicit MO: Monad[F]): StoreRetrieve[F] =
+      Kleisli { id => MO.point { Nil } }
 
-    def write: StoreInsert =
-      Kleisli { events => IO { () } }
+    def write[F[_]](implicit MO: Monad[F]): StoreInsert[F] =
+      Kleisli { events => MO.point { () } }
+  }
+}
+
+trait RedisEventStore {
+
+  implicit val cassandraEventStore = new EventStore[Redis] {
+    
+    def read[F[_]](implicit MO: Monad[F]): StoreRetrieve[F] =
+      Kleisli { id => MO.point { Nil } }
+
+    def write[F[_]](implicit MO: Monad[F]): StoreInsert[F] =
+      Kleisli { events => MO.point { () } }
   }
 }

@@ -5,7 +5,6 @@ import org.scalacheck.Prop.forAll
 import scalaz.Applicative
 import scalaz.Equal
 import org.scalacheck._
-import Arbitrary.arbitrary
 import scalaz._
 import scalaz.Scalaz._
 

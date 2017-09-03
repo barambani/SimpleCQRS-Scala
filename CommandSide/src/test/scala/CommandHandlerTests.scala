@@ -5,7 +5,6 @@ import org.specs2.mutable._
 import SimpleCqrsScala.CommandSide.Domain.Commands._
 import SimpleCqrsScala.CommandSide.Domain.Events._
 import SimpleCqrsScala.CommandSide.Print.PrintSyntax
-import SimpleCqrsScala.CommandSide.Domain.{Aggregate, Order, InventoryItem, Identity}
 import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
 import SimpleCqrsScala.CommandSide.Application.InventoryItemCommandHandlers._
 import SimpleCqrsScala.CommandSide.Application.OrderCommandHandlers._

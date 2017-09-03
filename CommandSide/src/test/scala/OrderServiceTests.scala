@@ -2,7 +2,6 @@ package SimpleCqrsScala.CommandSide.Test
 
 import org.specs2.mutable._
 import SimpleCqrsScala.CommandSide.Domain.Order
-import SimpleCqrsScala.CommandSide.Domain.Order._
 import SimpleCqrsScala.CommandSide.Domain.DomainState.EitherTransition._
 import SimpleCqrsScala.CommandSide.Services.OrderService
 import SimpleCqrsScala.CommandSide.Domain.Validator._

@@ -1,7 +1,6 @@
 package SimpleCqrsScala.CommandSide.Domain
 
 import java.util.UUID
-import scala.language.implicitConversions
 
 object Errors {
 

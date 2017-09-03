@@ -13,13 +13,21 @@ import SimpleCqrsScala.CommandSide.Domain.DomainAggregates._
 
 import cats.effect.IO
 
+import scalaz.Monad
 import scalaz.Kleisli
+
+import scala.language.higherKinds
 
 trait CommandHandlerStubs {
 
   lazy val itemId = UUID.randomUUID
   lazy val orderId = UUID.randomUUID
 
+  implicit object IoMonad extends Monad[IO] {
+    def point[A](a: => A): IO[A] = IO { a }
+    def bind[A, B](fa: IO[A])(f: A => IO[B]): IO[B] = fa flatMap f
+  }
+  
   lazy val testStore: Map[UUID, List[Event]] = Map(
     itemId -> List(
       UnknownHappened(itemId, 6),
@@ -34,28 +42,29 @@ trait CommandHandlerStubs {
 
   val orderTestCache = new Cache[LocalActor, Order] {
 
-    def read: CacheGet[Order] = 
-      Kleisli { id => IO { None } }
+    def read[F[_]](implicit MO: Monad[F]): CacheGet[F, Order] = 
+      Kleisli { id => MO.point { None } }
 
-    def write: CachePut[Order] =
-      Kleisli { a => IO { () } }
+    def write[F[_]](implicit MO: Monad[F]): CachePut[F, Order] =
+      Kleisli { a => MO.point { () } }
   }
 
   val inventoryItemTestCache = new Cache[LocalActor, InventoryItem] {
 
-    def read: CacheGet[InventoryItem] = 
-      Kleisli { id => IO { None } }
+    def read[F[_]](implicit MO: Monad[F]): CacheGet[F, InventoryItem] = 
+      Kleisli { id => MO.point { None } }
 
-    def write: CachePut[InventoryItem] =
-      Kleisli { a => IO { () } }
+    def write[F[_]](implicit MO: Monad[F]): CachePut[F, InventoryItem] =
+      Kleisli { a => MO.point { () } }
   }
 
   val testEventStore = new EventStore[Cassandra] {
-    def read: StoreRetrieve =
-      Kleisli { id => IO { testStore.getOrElse(id, Nil) } }
+ 
+    def read[F[_]](implicit MO: Monad[F]): StoreRetrieve[F] =
+      Kleisli { id => MO.point { testStore.getOrElse(id, Nil) } }
 
-    def write: StoreInsert =
-      Kleisli { events => IO { () } }
+    def write[F[_]](implicit MO: Monad[F]): StoreInsert[F] =
+      Kleisli { events => MO.point { () } }
   }
 
   implicit val currentTestOrderState: CurrentAggregateState[LocalActor, Cassandra, Order] = 
@@ -77,5 +86,5 @@ trait CommandHandlerStubs {
       H: Handler.AUX[C, A],
       AGG: Aggregate[A],
       CA: CurrentAggregateState[LocalActor, Cassandra, A]): Validated[(A, List[Event])] =
-    command.handle(LocalActor, Cassandra).unsafeRunSync
+    command.handle[LocalActor, Cassandra, IO].unsafeRunSync
 }

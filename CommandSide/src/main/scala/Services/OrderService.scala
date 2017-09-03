@@ -1,8 +1,6 @@
 package SimpleCqrsScala.CommandSide.Services
 
 import SimpleCqrsScala.CommandSide.Domain.Order
-import SimpleCqrsScala.CommandSide.Domain.Open
-import SimpleCqrsScala.CommandSide.Domain.Validator._
 import SimpleCqrsScala.CommandSide.Domain.Events._
 import SimpleCqrsScala.CommandSide.Domain.DomainState._
 import SimpleCqrsScala.CommandSide.Domain.DomainState.EitherTransition._

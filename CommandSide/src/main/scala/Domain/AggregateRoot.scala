@@ -2,10 +2,7 @@ package SimpleCqrsScala.CommandSide.Domain
 
 import java.util.UUID
 import Events._
-import Events.Event._
 import scala.annotation._
-
-import scala.language.higherKinds
 
 trait Versioned {
   val version: Long
@@ -44,8 +41,6 @@ object AggregateLaws {
 
 
 object AggregateRoot {
-
-  import DomainState._
 
   @implicitNotFound("implicit not found for Aggregate[{A}]")
   def evolve[A](aState: A)(withHistory: List[Event])(implicit AGG: Aggregate[A]): A =

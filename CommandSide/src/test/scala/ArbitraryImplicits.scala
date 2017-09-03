@@ -2,7 +2,6 @@ package SimpleCqrsScala.CommandSide.Test
 
 import scalaz.{\/-}
 import org.scalacheck._
-import Arbitrary.arbitrary
 
 import SimpleCqrsScala.CommandSide.Domain.Validator._
 

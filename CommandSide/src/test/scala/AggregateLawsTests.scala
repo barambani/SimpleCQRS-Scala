@@ -5,7 +5,6 @@ import SimpleCqrsScala.CommandSide.Domain.InventoryItem
 import SimpleCqrsScala.CommandSide.Domain.Order
 import SimpleCqrsScala.CommandSide.Domain._
 import DomainAggregates._
-import AggregateLaws._
 
 abstract class AggreagateLawsTests[A](name: String)(implicit AGG: Aggregate[A]) extends Specification {
 

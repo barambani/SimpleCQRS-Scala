@@ -1,14 +1,9 @@
 package SimpleCqrsScala.CommandSide.Domain
 
-import SimpleCqrsScala.CommandSide._
 import SimpleCqrsScala.CommandSide.Domain.Events._
-import SimpleCqrsScala.CommandSide.Domain.Errors._
 import scalaz.StateT
 import scalaz.State
-import scalaz.Monad
-import scalaz.Reader
-import scalaz.{\/, -\/, \/-}
-import scalaz.NonEmptyList
+import scalaz.\/-
 import Validator._
 
 import AggregateRoot._

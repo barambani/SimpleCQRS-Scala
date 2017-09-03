@@ -1,7 +1,6 @@
 package SimpleCqrsScala.CommandSide
 
 import SimpleCqrsScala.CommandSide.Domain.Events._
-import SimpleCqrsScala.CommandSide.Domain.Events.Event._
 import SimpleCqrsScala.CommandSide.Domain.Errors._
 import scalaz.NonEmptyList
 import scalaz.syntax.foldable._ 

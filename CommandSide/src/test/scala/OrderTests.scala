@@ -2,7 +2,6 @@ package SimpleCqrsScala.CommandSide.Test
 
 import org.specs2.mutable._
 import SimpleCqrsScala.CommandSide.Domain.Order
-import SimpleCqrsScala.CommandSide.Domain.Order._
 import SimpleCqrsScala.CommandSide.Domain.Events._
 
 import java.util.UUID

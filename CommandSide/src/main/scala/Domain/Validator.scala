@@ -2,7 +2,6 @@ package SimpleCqrsScala.CommandSide.Domain
 
 import scalaz.{\/, -\/, \/-}
 import scalaz.NonEmptyList
-import scalaz.Applicative
 import SimpleCqrsScala.CommandSide.Domain.Errors._
 
 object Validator {
