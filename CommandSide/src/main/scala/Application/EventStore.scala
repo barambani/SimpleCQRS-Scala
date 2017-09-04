@@ -28,7 +28,7 @@ object EventStore {
 //  ----------------------------------
 //  Actual event store implementations
 //  ----------------------------------
-trait CassandraStoreTypes {
+trait CassandraStore {
 
   implicit val cassandraEventStore = new EventStore[Cassandra] {
     
@@ -42,7 +42,7 @@ trait CassandraStoreTypes {
 
 trait RedisEventStore {
 
-  implicit val cassandraEventStore = new EventStore[Redis] {
+  implicit val redisEventStore = new EventStore[Redis] {
     
     def read[F[_]](implicit MO: Monad[F]): StoreRetrieve[F] =
       Kleisli { id => MO.point { Nil } }

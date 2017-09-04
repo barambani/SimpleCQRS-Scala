@@ -46,6 +46,46 @@ object Handler {
   }
 }
 
+object BuiltInCommandHandlers extends CassandraStore with RedisEventStore {
+
+  import SimpleCqrsScala.CommandSide.Application.Handler.HandlerSyntax
+
+  implicit class BuiltInCommandHandlersSyntax[C <: Command, A <: Identity](c: C) {
+    
+    def handleCassandra[F[_]](
+      implicit 
+        H  : Handler.AUX[C, A],
+        CA : Cache[LocalActor, A],
+        AGG: Aggregate[A],
+        MO : Monad[F]): F[Validated[(A, List[Event])]] =
+      c.handle[LocalActor, Cassandra, F]
+
+    def handleCassandraDist[F[_]](
+      implicit 
+        H  : Handler.AUX[C, A],
+        CA : Cache[Memcached, A],
+        AGG: Aggregate[A],
+        MO : Monad[F]): F[Validated[(A, List[Event])]] =
+      c.handle[Memcached, Cassandra, F]
+
+    def handleRedis[F[_]](
+      implicit 
+        H  : Handler.AUX[C, A],
+        CA : Cache[LocalActor, A],
+        AGG: Aggregate[A],
+        MO : Monad[F]): F[Validated[(A, List[Event])]] =
+      c.handle[LocalActor, Redis, F]
+
+    def handleRediasDist[F[_]](
+      implicit 
+        H  : Handler.AUX[C, A],
+        CA : Cache[Memcached, A],
+        AGG: Aggregate[A],
+        MO : Monad[F]): F[Validated[(A, List[Event])]] =
+      c.handle[Memcached, Redis, F]
+  }
+}
+
 object InventoryItemCommandHandlers extends InventoryItemService {
 
   import SimpleCqrsScala.CommandSide.Application.Handler._
